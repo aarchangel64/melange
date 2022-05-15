@@ -749,6 +749,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keyframe"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3c02b74c96768920b2c0d7fc723963dcbc2fc165c9db9eb64889635496c4a0b"
+dependencies = [
+ "mint",
+ "num-traits",
+]
+
+[[package]]
 name = "khronos_api"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -827,6 +837,7 @@ dependencies = [
 name = "logout-rs"
 version = "0.1.0"
 dependencies = [
+ "keyframe",
  "piston",
  "piston2d-graphics",
  "piston2d-opengl_graphics",
@@ -881,6 +892,12 @@ checksum = "d2b29bd4bc3f33391105ebee3589c19197c4271e3e5a9ec9bfe8127eeff8f082"
 dependencies = [
  "adler",
 ]
+
+[[package]]
+name = "mint"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e53debba6bda7a793e5f99b8dacf19e626084f525f7829104ba9898f367d85ff"
 
 [[package]]
 name = "mio"
