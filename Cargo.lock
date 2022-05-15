@@ -119,6 +119,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "cocoa"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -569,6 +578,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "glfw"
+version = "0.44.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "103c29fa9d30c5371187895a10948d4f54b4111450328b4e439133d88243c5e3"
+dependencies = [
+ "bitflags",
+ "glfw-sys",
+ "objc",
+ "raw-window-handle 0.4.3",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "glfw-sys"
+version = "3.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b0cbb12e2dfac494316e91f6bf7cf070ccd9c61501a02f4af14d71222c9f67f"
+dependencies = [
+ "cmake",
+]
+
+[[package]]
 name = "glutin"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,6 +872,7 @@ dependencies = [
  "piston",
  "piston2d-graphics",
  "piston2d-opengl_graphics",
+ "pistoncore-glfw_window",
  "pistoncore-glutin_window",
  "winit",
 ]
@@ -1283,6 +1315,17 @@ dependencies = [
  "pistoncore-input",
  "pistoncore-window",
  "spin_sleep",
+]
+
+[[package]]
+name = "pistoncore-glfw_window"
+version = "0.75.0"
+dependencies = [
+ "gl",
+ "glfw",
+ "pistoncore-input",
+ "pistoncore-window",
+ "shader_version",
 ]
 
 [[package]]
