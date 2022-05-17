@@ -1,32 +1,33 @@
-extern crate glutin_window;
-extern crate graphics;
-extern crate opengl_graphics;
-extern crate piston;
-
-use glutin_window::GlutinWindow as Window;
-// use glfw_window::GlfwWindow as Window;
-use keyframe::functions::Linear;
-use keyframe::{ease, functions::EaseIn};
-use opengl_graphics::{GlGraphics, OpenGL};
+use fontconfig::Fontconfig;
+use glutin_window::GlutinWindow;
+use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
-use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::dpi::LogicalSize;
 
-pub struct App {
+use keyframe::functions::{EaseInOutCubic, EaseInQuint, Linear};
+use keyframe::{ease, functions::EaseIn};
+
+use fps_counter::*;
+
+pub struct App<'a> {
     gl: GlGraphics, // OpenGL drawing backend.
-    rotation: f64,  // Rotation for the square.
+    glyph: GlyphCache<'a>,
+    rotation: f64, // Rotation for the square.
     time: f64,
+    fps: usize,
+    ups: usize,
 }
 
-impl App {
+impl App<'_> {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
 
         const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-        let size = ease(Linear, 0.0, 1.0, (self.time / 1.0).clamp(0.0, 1.0));
+        let size = ease(EaseInOutCubic, 0.0, 1.0, (self.time / 1.5).clamp(0.0, 1.0));
 
         let (x, y) = (
             args.window_size[0] * (1.0 - size) / 2.0,
@@ -50,9 +51,16 @@ impl App {
             // .rot_rad(rotation)
             // .trans(-25.0, -25.0);
 
-            // Draw a box rotating around the middle of the screen.
-
             Rectangle::new_border(WHITE, 1.0).draw(square, &c.draw_state, transform, gl);
+            Text::new_color([1.0, 1.0, 1.0, 1.0], 32)
+                .draw(
+                    format!("fps: {}, tps: {}", self.fps, self.ups).as_str(),
+                    &mut self.glyph,
+                    &c.draw_state,
+                    transform.trans(10.0, 30.0).zoom(0.5),
+                    gl,
+                )
+                .unwrap();
         });
     }
 
@@ -68,37 +76,44 @@ fn main() {
     // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
 
-    // Create an Glutin window.
-    let mut window: Window = WindowSettings::new("Logout-HUD", [100, 100])
+    let settings = WindowSettings::new("Logout-HUD", [200, 200])
         .graphics_api(opengl)
+        .vsync(true)
         .fullscreen(false)
-        .resizable(true)
+        .resizable(false)
         .decorated(false)
         .transparent(true)
-        .exit_on_esc(true)
-        .build()
-        .unwrap();
+        .exit_on_esc(true);
+
+    let mut window: GlutinWindow = settings.build().unwrap();
 
     let gwindow = window.ctx.window();
     let monitor = gwindow.current_monitor().unwrap();
     let monitor_width = (monitor.size().width as f64 / monitor.scale_factor()) as i32;
     let monitor_height = (monitor.size().height as f64 / monitor.scale_factor()) as i32;
-    let mut pos = monitor.position();
-    println!("{}", pos.x);
-    // pos.x += 500;
-    // pos.y += 50;
+    let pos = monitor.position();
     gwindow.set_always_on_top(true);
-    // gwindow.set_outer_position(PhysicalPosition::new(0, 0));
     gwindow.set_outer_position(pos);
     gwindow.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
+
+    let fc = Fontconfig::new().unwrap();
+    let font = fc.find("iosevka cosmic", Some("italic")).unwrap();
+    println!("{}", font.path.to_str().unwrap());
+
+    let glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
 
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
+        glyph: glyph_cache,
         rotation: 0.0,
         time: 0.0,
+        fps: 0,
+        ups: 0,
     };
 
+    let mut ups = FPSCounter::default();
+    let mut fps = FPSCounter::default();
     // let mut sequence = keyframes![
     // (0.0, 0.0),
     // (1.)]
@@ -107,10 +122,12 @@ fn main() {
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
             app.render(&args);
+            app.fps = fps.tick();
         }
 
         if let Some(args) = e.update_args() {
             app.update(&args);
+            app.ups = ups.tick();
         }
     }
 }
