@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 
 use fontconfig::Fontconfig;
 use glutin_window::GlutinWindow;
-use graphics::{line, Context, DrawState, Graphics, Line};
+use graphics::{line, Context};
 use keyframe::EasingFunction;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::event_loop::{EventSettings, Events};
@@ -10,10 +10,7 @@ use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 use winit::dpi::LogicalSize;
 
-use keyframe::functions::{
-    EaseInCubic, EaseInOutCubic, EaseInQuint, EaseOut, EaseOutCubic, Linear,
-};
-use keyframe::{ease, functions::EaseIn};
+use keyframe::{ease, functions::EaseInOutCubic};
 
 use fps_counter::*;
 
@@ -42,28 +39,28 @@ impl App<'_> {
         );
     }
 
-    fn anim_rect<F: EasingFunction>(
+    fn anim_rect(
         &mut self,
         colour: [f32; 4],
         radius: f64,
         (mut width, mut height): (f64, f64),
         (x, y): (f64, f64),
-        func: impl Borrow<F>,
-        mut seconds: f64,
+        progress: f64,
         ctx: Context,
     ) {
         width /= 2.0;
         height /= 2.0;
-        seconds /= 4.0;
 
         let mut draw_line =
             |points: [f64; 4]| line(colour, radius, points, ctx.transform, &mut self.gl);
+
+        let map = |val: f64, start, end| (val.clamp(start, end) - start) / (end - start);
 
         // Bottom
         draw_line([
             x - width,
             y + height,
-            x + width * (2.0 * App::anim(EaseOut, seconds, 0.0, self.time) - 1.0),
+            x + width * (2.0 * map(progress, 0.0, 0.25) - 1.0),
             y + height,
         ]);
         // Left
@@ -71,13 +68,13 @@ impl App<'_> {
             x + width,
             y + height,
             x + width,
-            y - height * (2.0 * App::anim(EaseOut, seconds, seconds, self.time) - 1.0),
+            y - height * (2.0 * map(progress, 0.25, 0.50) - 1.0),
         ]);
         // Top
         draw_line([
             x + width,
             y - height,
-            x - width * (2.0 * App::anim(EaseOut, seconds, 2.0 * seconds, self.time) - 1.0),
+            x - width * (2.0 * map(progress, 0.50, 0.75) - 1.0),
             y - height,
         ]);
         // Right
@@ -85,7 +82,7 @@ impl App<'_> {
             x - width,
             y - height,
             x - width,
-            y + height * (2.0 * App::anim(EaseOut, seconds, 3.0 * seconds, self.time) - 1.0),
+            y + height * (2.0 * map(progress, 0.75, 1.0) - 1.0),
         ]);
     }
 
@@ -108,9 +105,17 @@ impl App<'_> {
             WHITE,
             1.0,
             (500.0, 500.0),
-            (1920.0 / 2.0, 1080.0 / 2.0),
-            EaseOut,
-            3.0,
+            (args.window_size[0] / 2.0, args.window_size[1] / 2.0),
+            App::anim(EaseInOutCubic, 2.0, 0.0, self.time),
+            ctx,
+        );
+
+        self.anim_rect(
+            WHITE,
+            1.0,
+            (500.0, 500.0),
+            (1920.0 / 3.0, 1080.0 / 3.0),
+            App::anim(EaseInOutCubic, 2.0, 0.5, self.time),
             ctx,
         );
 
