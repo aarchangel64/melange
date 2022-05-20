@@ -12,14 +12,11 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
 use glutin_window::GlutinWindow;
 
-use keyframe::{ease, functions::EaseInOutCubic};
-use keyframe::EasingFunction;
+use keyframe::{EasingFunction, ease};
 use fontconfig::Fontconfig;
-use winit::platform::unix::x11::ffi::NoExpose;
 
-pub struct App<'a> {
-    gl: GlGraphics, // OpenGL drawing backend.
-    glyph: GlyphCache<'a>,
+pub struct App {
+     // OpenGL drawing backend.
     rotation: f64, // Rotation for the square.
     time: f64,
     fps: usize,
@@ -27,7 +24,7 @@ pub struct App<'a> {
     pos: [f64; 2],
 }
 
-impl App<'_> {
+impl App {
     #[inline]
     fn anim<F: EasingFunction>(
         function: impl Borrow<F>,
@@ -44,19 +41,19 @@ impl App<'_> {
     }
 
     fn anim_rect(
-        &mut self,
         colour: [f32; 4],
         radius: f64,
         (mut width, mut height): (f64, f64),
         (x, y): (f64, f64),
         progress: f64,
         ctx: Context,
+        gl: &mut GlGraphics
     ) {
         width /= 2.0;
         height /= 2.0;
 
         let mut draw_line =
-            |points: [f64; 4]| line(colour, radius, points, ctx.transform, &mut self.gl);
+            |points: [f64; 4]| line(colour, radius, points, ctx.transform, gl);
 
         let map = |val: f64, start, end| (val.clamp(start, end) - start) / (end - start);
 
@@ -90,17 +87,17 @@ impl App<'_> {
         ]);
     }
 
-    fn render(&mut self, args: &RenderArgs) {
+    fn render(&self, args: &RenderArgs, glyph: &mut GlyphCache, gl: &mut GlGraphics) {
         use graphics::*;
 
         const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-        let ctx = self.gl.draw_begin(args.viewport());
+        let ctx = gl.draw_begin(args.viewport());
         let [window_width, window_height] = args.window_size;
 
         // Clear the screen.
-        clear(BACKGROUND, &mut self.gl);
+        clear(BACKGROUND, gl);
 
         let transform = ctx.transform;
         // .trans(x, y)
@@ -112,44 +109,47 @@ impl App<'_> {
         let grid_height = window_height / 2.0;
         let anim_time = 0.7;
 
-        self.anim_rect(
+        App::anim_rect(
             WHITE,
             1.0,
             (button_size, button_size),
             (1.5* grid_width, grid_height),
             App::anim(EaseInOut, anim_time, 0.0, self.time),
             ctx,
+            gl
         );
 
-        self.anim_rect(
+        App::anim_rect(
             WHITE,
             1.0,
             (button_size, button_size),
             (3.0 * grid_width, grid_height),
             App::anim(EaseInOut, anim_time, anim_time * 0.3, self.time),
             ctx,
+            gl
         );
 
-        self.anim_rect(
+        App::anim_rect(
             WHITE,
             1.0,
             (button_size, button_size),
             (4.5 * grid_width, grid_height),
             App::anim(EaseInOut, anim_time, anim_time * 0.6, self.time),
             ctx,
+            gl
         );
 
         Text::new_color(WHITE, 32)
             .draw(
                 format!("fps: {}, tps: {}", self.fps, self.ups).as_str(),
-                &mut self.glyph,
+                glyph,
                 &ctx.draw_state,
                 transform.trans(10.0, 30.0).zoom(0.5),
-                &mut self.gl,
+                gl,
             )
             .unwrap();
 
-        self.gl.draw_end();
+        gl.draw_end();
     }
 
     fn update(&mut self, args: &UpdateArgs) {
@@ -191,12 +191,11 @@ fn main() {
     let font = fc.find("iosevka", Some("italic")).unwrap();
     println!("{}", font.path.to_str().unwrap());
 
-    let glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
+    let mut glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
+    let mut gl = GlGraphics::new(opengl);
 
     // Create a new game and run it.
     let mut app = App {
-        gl: GlGraphics::new(opengl),
-        glyph: glyph_cache,
         rotation: 0.0,
         time: 0.0,
         fps: 0,
@@ -219,7 +218,7 @@ fn main() {
         }
 
         if let Some(args) = e.render_args() {
-            app.render(&args);
+            app.render(&args, &mut glyph_cache, &mut gl);
             app.fps = fps.tick();
         }
 
