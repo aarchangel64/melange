@@ -1,18 +1,21 @@
 use std::borrow::Borrow;
 
-use fontconfig::Fontconfig;
-use glutin_window::GlutinWindow;
 use graphics::{line, Context};
-use keyframe::EasingFunction;
+use keyframe::functions::EaseInOut;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent, Button, Key, MouseCursorEvent};
 use piston::window::WindowSettings;
+use fps_counter::*;
+
 use winit::dpi::LogicalSize;
+use winit::event_loop::EventLoop;
+use glutin_window::GlutinWindow;
 
 use keyframe::{ease, functions::EaseInOutCubic};
-
-use fps_counter::*;
+use keyframe::EasingFunction;
+use fontconfig::Fontconfig;
+use winit::platform::unix::x11::ffi::NoExpose;
 
 pub struct App<'a> {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -21,6 +24,7 @@ pub struct App<'a> {
     time: f64,
     fps: usize,
     ups: usize,
+    pos: [f64; 2],
 }
 
 impl App<'_> {
@@ -93,6 +97,8 @@ impl App<'_> {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
         let ctx = self.gl.draw_begin(args.viewport());
+        let [window_width, window_height] = args.window_size;
+
         // Clear the screen.
         clear(BACKGROUND, &mut self.gl);
 
@@ -101,21 +107,35 @@ impl App<'_> {
         // .rot_rad(rotation)
         // .trans(-25.0, -25.0);
 
+        let button_size = window_width / 6.0;
+        let grid_width = window_width / 6.0;
+        let grid_height = window_height / 2.0;
+        let anim_time = 0.7;
+
         self.anim_rect(
             WHITE,
             1.0,
-            (500.0, 500.0),
-            (args.window_size[0] / 2.0, args.window_size[1] / 2.0),
-            App::anim(EaseInOutCubic, 2.0, 0.0, self.time),
+            (button_size, button_size),
+            (1.5* grid_width, grid_height),
+            App::anim(EaseInOut, anim_time, 0.0, self.time),
             ctx,
         );
 
         self.anim_rect(
             WHITE,
             1.0,
-            (500.0, 500.0),
-            (1920.0 / 3.0, 1080.0 / 3.0),
-            App::anim(EaseInOutCubic, 2.0, 0.5, self.time),
+            (button_size, button_size),
+            (3.0 * grid_width, grid_height),
+            App::anim(EaseInOut, anim_time, anim_time * 0.3, self.time),
+            ctx,
+        );
+
+        self.anim_rect(
+            WHITE,
+            1.0,
+            (button_size, button_size),
+            (4.5 * grid_width, grid_height),
+            App::anim(EaseInOut, anim_time, anim_time * 0.6, self.time),
             ctx,
         );
 
@@ -144,10 +164,13 @@ fn main() {
     // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
 
-    let settings = WindowSettings::new("Logout-HUD", [200, 200])
+    // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
+    let size = EventLoop::new().primary_monitor().unwrap().size();
+
+    let settings = WindowSettings::new("Logout-HUD", [size.width, size.height])
         .graphics_api(opengl)
         .vsync(true)
-        .fullscreen(false)
+        .fullscreen(true)
         .resizable(false)
         .decorated(false)
         .transparent(true)
@@ -165,7 +188,7 @@ fn main() {
     gwindow.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
 
     let fc = Fontconfig::new().unwrap();
-    let font = fc.find("iosevka cosmic", Some("italic")).unwrap();
+    let font = fc.find("iosevka", Some("italic")).unwrap();
     println!("{}", font.path.to_str().unwrap());
 
     let glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
@@ -178,6 +201,7 @@ fn main() {
         time: 0.0,
         fps: 0,
         ups: 0,
+        pos: [0.0, 0.0],
     };
 
     let mut ups = FPSCounter::default();
@@ -187,7 +211,13 @@ fn main() {
     // (1.)]
 
     let mut events = Events::new(EventSettings::new());
+
     while let Some(e) = events.next(&mut window) {
+
+        if let Some(pos) = e.mouse_cursor_args() {
+            app.pos = pos;
+        }
+
         if let Some(args) = e.render_args() {
             app.render(&args);
             app.fps = fps.tick();
