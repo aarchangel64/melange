@@ -66,7 +66,8 @@ impl App {
 
         self.ui
             .logout
-            .anim_rect(App::anim(EaseInOut, anim_time, 0.0, self.time), ctx, gl);
+            .anim_rect(App::anim(EaseInOut, anim_time, 0.0, self.time), ctx, gl)
+            .draw_label("test", glyph, ctx, gl);
         self.ui
             .sleep
             .anim_rect(App::anim(EaseInOut, anim_time, 0.3, self.time), ctx, gl);
@@ -89,6 +90,7 @@ impl App {
 
     fn update(&mut self, args: &UpdateArgs) {
         self.time += args.dt;
+        // self.ui.logout.set_size(self.ui.logout.rect.width * 1.001, self.ui.logout.rect.height * 1.001);
 
         // Rotate 2 radians per second.
         self.rotation += 2.0 * args.dt;
@@ -129,12 +131,6 @@ fn main() {
     let mut glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
     let mut gl = GlGraphics::new(opengl);
 
-    let size = dbg!(window.size());
-    let button_size = size.width / 6.0;
-    let grid_width = size.width / 6.0;
-    let grid_height = size.height / 2.0;
-
-    // Create a new game and run it.
     let mut app = App {
         rotation: 0.0,
         time: 0.0,
@@ -142,24 +138,9 @@ fn main() {
         ups: 0,
         pos: [0.0, 0.0],
         ui: UI {
-            logout: Button::new(
-                WHITE,
-                1.0,
-                (button_size, button_size),
-                (1.5 * grid_width, grid_height),
-            ),
-            sleep: Button::new(
-                WHITE,
-                1.0,
-                (button_size, button_size),
-                (3.0 * grid_width, grid_height),
-            ),
-            power: Button::new(
-                WHITE,
-                1.0,
-                (button_size, button_size),
-                (4.5 * grid_width, grid_height),
-            ),
+            logout: Button::new_empty(WHITE, 0.5),
+            sleep: Button::new_empty(WHITE, 0.5),
+            power: Button::new_empty(WHITE, 0.5),
         },
     };
 
@@ -187,7 +168,6 @@ fn main() {
         }
 
         if let Some(args) = e.resize_args() {
-            dbg!(args);
             let button_size = args.window_size[0] / 6.0;
             let grid_width = args.window_size[0] / 6.0;
             let grid_height = args.window_size[1] / 2.0;

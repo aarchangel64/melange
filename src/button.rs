@@ -1,5 +1,5 @@
-use graphics::{line, Context, Line};
-use opengl_graphics::GlGraphics;
+use graphics::{Context, Line, Text, Transformed};
+use opengl_graphics::{GlGraphics, GlyphCache};
 
 pub struct Rect {
     width: f64,
@@ -33,6 +33,18 @@ pub struct Button {
 }
 
 impl Button {
+
+    pub fn new_empty(
+        colour: [f32; 4],
+        thickness: f64,
+    ) -> Button {
+        Button {
+            colour,
+            thickness,
+            rect: Rect::new(0.0, 0.0, (0.0, 0.0)),
+        }
+    }
+
     pub fn new(
         colour: [f32; 4],
         thickness: f64,
@@ -54,7 +66,20 @@ impl Button {
         self.rect = Rect::new(self.rect.width, self.rect.height, centre)
     }
 
-    pub fn anim_rect(&self, progress: f64, ctx: Context, gl: &mut GlGraphics) {
+    pub fn draw_label(&self, text: &str, glyph: &mut GlyphCache, ctx: Context, gl: &mut GlGraphics) {
+        Text::new_color(self.colour, 32)
+            .draw(
+                text,
+                glyph,
+                &ctx.draw_state,
+                ctx.transform.trans(self.rect.centre.0, self.rect.bottom + self.rect.height * 0.1).zoom(0.5),
+                gl,
+            )
+            .unwrap();
+
+    }
+
+    pub fn anim_rect(&self, progress: f64, ctx: Context, gl: &mut GlGraphics) -> &Button {
         let mut draw_line = |points: [f64; 4]| {
             Line::new_round(self.colour, self.thickness).draw(
                 points,
@@ -94,5 +119,7 @@ impl Button {
             self.rect.left,
             self.rect.top + self.rect.height * map(progress, 0.75, 1.0),
         ]);
+
+        self
     }
 }
