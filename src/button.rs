@@ -1,4 +1,4 @@
-use graphics::{line, Context};
+use graphics::{line, Context, Line};
 use opengl_graphics::GlGraphics;
 
 pub struct Rect {
@@ -55,8 +55,14 @@ impl Button {
     }
 
     pub fn anim_rect(&self, progress: f64, ctx: Context, gl: &mut GlGraphics) {
-        let mut draw_line =
-            |points: [f64; 4]| line(self.colour, self.thickness, points, ctx.transform, gl);
+        let mut draw_line = |points: [f64; 4]| {
+            Line::new_round(self.colour, self.thickness).draw(
+                points,
+                &ctx.draw_state,
+                ctx.transform,
+                gl,
+            )
+        };
 
         let map = |val: f64, start, end| (val.clamp(start, end) - start) / (end - start);
 
