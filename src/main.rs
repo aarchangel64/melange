@@ -1,27 +1,40 @@
 use std::borrow::Borrow;
 
-use graphics::{line, Context};
+use fps_counter::*;
 use keyframe::functions::EaseInOut;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent, Button, Key, MouseCursorEvent};
+use piston::input::{MouseCursorEvent, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
-use fps_counter::*;
+use piston::{ResizeEvent, Window};
 
+use glutin_window::GlutinWindow;
 use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
-use glutin_window::GlutinWindow;
 
-use keyframe::{EasingFunction, ease};
 use fontconfig::Fontconfig;
+use keyframe::{ease, EasingFunction};
+
+use crate::button::Button;
+
+mod button;
+
+const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
+const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+
+struct UI {
+    logout: Button,
+    sleep: Button,
+    power: Button,
+}
 
 pub struct App {
-     // OpenGL drawing backend.
     rotation: f64, // Rotation for the square.
     time: f64,
     fps: usize,
     ups: usize,
     pos: [f64; 2],
+    ui: UI,
 }
 
 impl App {
@@ -40,104 +53,26 @@ impl App {
         );
     }
 
-    fn anim_rect(
-        colour: [f32; 4],
-        radius: f64,
-        (mut width, mut height): (f64, f64),
-        (x, y): (f64, f64),
-        progress: f64,
-        ctx: Context,
-        gl: &mut GlGraphics
-    ) {
-        width /= 2.0;
-        height /= 2.0;
-
-        let mut draw_line =
-            |points: [f64; 4]| line(colour, radius, points, ctx.transform, gl);
-
-        let map = |val: f64, start, end| (val.clamp(start, end) - start) / (end - start);
-
-        // Bottom
-        draw_line([
-            x - width,
-            y + height,
-            x + width * (2.0 * map(progress, 0.0, 0.25) - 1.0),
-            y + height,
-        ]);
-        // Left
-        draw_line([
-            x + width,
-            y + height,
-            x + width,
-            y - height * (2.0 * map(progress, 0.25, 0.50) - 1.0),
-        ]);
-        // Top
-        draw_line([
-            x + width,
-            y - height,
-            x - width * (2.0 * map(progress, 0.50, 0.75) - 1.0),
-            y - height,
-        ]);
-        // Right
-        draw_line([
-            x - width,
-            y - height,
-            x - width,
-            y + height * (2.0 * map(progress, 0.75, 1.0) - 1.0),
-        ]);
-    }
-
     fn render(&self, args: &RenderArgs, glyph: &mut GlyphCache, gl: &mut GlGraphics) {
         use graphics::*;
 
-        const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-
         let ctx = gl.draw_begin(args.viewport());
-        let [window_width, window_height] = args.window_size;
 
         // Clear the screen.
         clear(BACKGROUND, gl);
 
         let transform = ctx.transform;
-        // .trans(x, y)
-        // .rot_rad(rotation)
-        // .trans(-25.0, -25.0);
-
-        let button_size = window_width / 6.0;
-        let grid_width = window_width / 6.0;
-        let grid_height = window_height / 2.0;
         let anim_time = 0.7;
 
-        App::anim_rect(
-            WHITE,
-            1.0,
-            (button_size, button_size),
-            (1.5* grid_width, grid_height),
-            App::anim(EaseInOut, anim_time, 0.0, self.time),
-            ctx,
-            gl
-        );
-
-        App::anim_rect(
-            WHITE,
-            1.0,
-            (button_size, button_size),
-            (3.0 * grid_width, grid_height),
-            App::anim(EaseInOut, anim_time, anim_time * 0.3, self.time),
-            ctx,
-            gl
-        );
-
-        App::anim_rect(
-            WHITE,
-            1.0,
-            (button_size, button_size),
-            (4.5 * grid_width, grid_height),
-            App::anim(EaseInOut, anim_time, anim_time * 0.6, self.time),
-            ctx,
-            gl
-        );
+        self.ui
+            .logout
+            .anim_rect(App::anim(EaseInOut, anim_time, 0.0, self.time), ctx, gl);
+        self.ui
+            .sleep
+            .anim_rect(App::anim(EaseInOut, anim_time, 0.3, self.time), ctx, gl);
+        self.ui
+            .power
+            .anim_rect(App::anim(EaseInOut, anim_time, 0.6, self.time), ctx, gl);
 
         Text::new_color(WHITE, 32)
             .draw(
@@ -194,6 +129,11 @@ fn main() {
     let mut glyph_cache = GlyphCache::new(font.path.as_path(), (), TextureSettings::new()).unwrap();
     let mut gl = GlGraphics::new(opengl);
 
+    let size = dbg!(window.size());
+    let button_size = size.width / 6.0;
+    let grid_width = size.width / 6.0;
+    let grid_height = size.height / 2.0;
+
     // Create a new game and run it.
     let mut app = App {
         rotation: 0.0,
@@ -201,6 +141,26 @@ fn main() {
         fps: 0,
         ups: 0,
         pos: [0.0, 0.0],
+        ui: UI {
+            logout: Button::new(
+                WHITE,
+                1.0,
+                (button_size, button_size),
+                (1.5 * grid_width, grid_height),
+            ),
+            sleep: Button::new(
+                WHITE,
+                1.0,
+                (button_size, button_size),
+                (3.0 * grid_width, grid_height),
+            ),
+            power: Button::new(
+                WHITE,
+                1.0,
+                (button_size, button_size),
+                (4.5 * grid_width, grid_height),
+            ),
+        },
     };
 
     let mut ups = FPSCounter::default();
@@ -212,7 +172,6 @@ fn main() {
     let mut events = Events::new(EventSettings::new());
 
     while let Some(e) = events.next(&mut window) {
-
         if let Some(pos) = e.mouse_cursor_args() {
             app.pos = pos;
         }
@@ -225,6 +184,22 @@ fn main() {
         if let Some(args) = e.update_args() {
             app.update(&args);
             app.ups = ups.tick();
+        }
+
+        if let Some(args) = e.resize_args() {
+            dbg!(args);
+            let button_size = args.window_size[0] / 6.0;
+            let grid_width = args.window_size[0] / 6.0;
+            let grid_height = args.window_size[1] / 2.0;
+
+            app.ui.logout.set_size(button_size, button_size);
+            app.ui.logout.set_pos((1.5 * grid_width, grid_height));
+
+            app.ui.sleep.set_size(button_size, button_size);
+            app.ui.sleep.set_pos((3.0 * grid_width, grid_height));
+
+            app.ui.power.set_size(button_size, button_size);
+            app.ui.power.set_pos((4.5 * grid_width, grid_height));
         }
     }
 }
