@@ -1,13 +1,11 @@
 use std::borrow::Borrow;
 use std::time::Duration;
 
-use ggez::conf::{self, FullscreenType, WindowMode};
+use ggez::conf::{self, FullscreenType};
 use ggez::event::{self, EventLoop};
-use ggez::graphics::{self, Color, DrawParam};
+use ggez::graphics::{self, Color};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameResult};
-
-use glam::Vec2;
 
 use keyframe::functions::EaseInOut;
 
@@ -48,9 +46,9 @@ impl MainState {
             time: Duration::new(0, 0),
             pos: [0.0, 0.0],
             ui: UI {
-                logout: Button::new_empty(Color::WHITE, 2.),
-                sleep: Button::new_empty(Color::WHITE, 2.),
-                power: Button::new_empty(Color::WHITE, 2.),
+                logout: Button::new_empty(String::from("Logout"), Color::WHITE, 2.),
+                sleep: Button::new_empty(String::from("Sleep"), Color::WHITE, 2.),
+                power: Button::new_empty(String::from("Power"), Color::WHITE, 2.),
             },
             font,
         };
@@ -60,12 +58,17 @@ impl MainState {
 }
 
 #[inline]
-fn anim<F: EasingFunction>(function: impl Borrow<F>, seconds: f32, offset: f32, time: f32) -> f32 {
+fn anim<F: EasingFunction>(
+    function: impl Borrow<F>,
+    seconds: f32,
+    offset: f32,
+    time: Duration,
+) -> f32 {
     return ease(
         function,
         0.0,
         1.0,
-        ((time - offset) / seconds).clamp(0.0, 1.0),
+        ((time.as_secs_f32() - offset) / seconds).clamp(0.0, 1.0),
     );
 }
 
@@ -74,7 +77,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // Clear the screen.
         graphics::clear(ctx, BACKGROUND.into());
 
-        let anim_time = 2.7;
+        let anim_time = 1.7;
 
         // let mesh = graphics::Mesh::new_line(
         //     ctx,
@@ -84,19 +87,19 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // )?;
         // graphics::draw(ctx, &mesh, (glam::vec2(0., 0.),))?;
 
-        self.ui.logout.anim_rect(
-            anim(EaseInOut, anim_time, 0.0, self.time.as_secs_f32()),
-            ctx,
-        );
-        //     .draw_label("test", glyph, ctx, gl);
-        self.ui.sleep.anim_rect(
-            anim(EaseInOut, anim_time, 0.3, self.time.as_secs_f32()),
-            ctx,
-        );
-        self.ui.power.anim_rect(
-            anim(EaseInOut, anim_time, 0.6, self.time.as_secs_f32()),
-            ctx,
-        );
+        self.ui
+            .logout
+            .anim_rect(anim(EaseInOut, anim_time, 0.0, self.time), ctx)?
+            .draw_label(self.font, 32.0, ctx)?;
+
+        self.ui
+            .sleep
+            .anim_rect(anim(EaseInOut, anim_time, 0.3, self.time), ctx)?
+            .draw_label(self.font, 32.0, ctx)?;
+        self.ui
+            .power
+            .anim_rect(anim(EaseInOut, anim_time, 0.6, self.time), ctx)?
+            .draw_label(self.font, 32.0, ctx)?;
 
         let text = graphics::Text::new((
             format!("fps: {}", ggez::timer::fps(ctx).round()),

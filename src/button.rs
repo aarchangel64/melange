@@ -1,6 +1,6 @@
 use ggez::{
-    graphics::{self, Color, DrawParam, MeshBuilder},
-    Context,
+    graphics::{self, Color, DrawParam, Font, MeshBuilder},
+    Context, GameResult,
 };
 
 pub struct Rect {
@@ -29,14 +29,16 @@ impl Rect {
 }
 
 pub struct Button {
+    label: String,
     colour: Color,
     thickness: f32,
     rect: Rect,
 }
 
 impl Button {
-    pub fn new_empty(colour: Color, thickness: f32) -> Button {
+    pub fn new_empty(label: String, colour: Color, thickness: f32) -> Button {
         Button {
+            label,
             colour,
             thickness,
             rect: Rect::new(1.0, 1.0, (1.0, 1.0)),
@@ -44,12 +46,14 @@ impl Button {
     }
 
     pub fn new(
+        label: String,
         colour: Color,
         thickness: f32,
         (width, height): (f32, f32),
         centre: (f32, f32),
     ) -> Button {
         Button {
+            label,
             colour,
             thickness,
             rect: Rect::new(width, height, centre),
@@ -64,20 +68,26 @@ impl Button {
         self.rect = Rect::new(self.rect.width, self.rect.height, centre)
     }
 
-    // pub fn draw_label(&self, text: &str, glyph: &mut GlyphCache, ctx: Context, gl: &mut GlGraphics) {
-    //     Text::new_color(self.colour, 32)
-    //         .draw(
-    //             text,
-    //             glyph,
-    //             &ctx.draw_state,
-    //             ctx.transform.trans(self.rect.centre.0, self.rect.bottom + self.rect.height * 0.1).zoom(0.5),
-    //             gl,
-    //         )
-    //         .unwrap();
+    pub fn draw_label(&self, font: Font, size: f32, ctx: &mut Context) -> GameResult<&Button> {
+        let mut text = graphics::Text::new((self.label.as_str(), font, size));
+        text.set_bounds(
+            glam::vec2(self.rect.width, f32::INFINITY),
+            graphics::Align::Center,
+        );
 
-    // }
+        graphics::draw(
+            ctx,
+            &text,
+            (glam::vec2(
+                self.rect.left,
+                self.rect.bottom + self.rect.height * 0.05,
+            ),),
+        )?;
 
-    pub fn anim_rect(&self, progress: f32, ctx: &mut Context) -> &Button {
+        Ok(self)
+    }
+
+    pub fn anim_rect(&self, progress: f32, ctx: &mut Context) -> GameResult<&Button> {
         let mut mesh = MeshBuilder::new();
 
         let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
@@ -132,6 +142,6 @@ impl Button {
             graphics::draw(ctx, &test, DrawParam::new()).unwrap();
         }
 
-        self
+        Ok(self)
     }
 }
