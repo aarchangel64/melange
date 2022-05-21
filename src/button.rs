@@ -1,16 +1,20 @@
+use ggez::{
+    graphics::{self, Color, DrawParam, MeshBuilder},
+    Context,
+};
 
 pub struct Rect {
-    width: f64,
-    height: f64,
-    centre: (f64, f64),
-    left: f64,
-    right: f64,
-    top: f64,
-    bottom: f64,
+    width: f32,
+    height: f32,
+    centre: (f32, f32),
+    left: f32,
+    right: f32,
+    top: f32,
+    bottom: f32,
 }
 
 impl Rect {
-    pub fn new(width: f64, height: f64, centre: (f64, f64)) -> Rect {
+    pub fn new(width: f32, height: f32, centre: (f32, f32)) -> Rect {
         Rect {
             width,
             height,
@@ -25,29 +29,25 @@ impl Rect {
 }
 
 pub struct Button {
-    colour: [f32; 4],
-    thickness: f64,
+    colour: Color,
+    thickness: f32,
     rect: Rect,
 }
 
 impl Button {
-
-    pub fn new_empty(
-        colour: [f32; 4],
-        thickness: f64,
-    ) -> Button {
+    pub fn new_empty(colour: Color, thickness: f32) -> Button {
         Button {
             colour,
             thickness,
-            rect: Rect::new(0.0, 0.0, (0.0, 0.0)),
+            rect: Rect::new(1.0, 1.0, (1.0, 1.0)),
         }
     }
 
     pub fn new(
-        colour: [f32; 4],
-        thickness: f64,
-        (width, height): (f64, f64),
-        centre: (f64, f64),
+        colour: Color,
+        thickness: f32,
+        (width, height): (f32, f32),
+        centre: (f32, f32),
     ) -> Button {
         Button {
             colour,
@@ -56,11 +56,11 @@ impl Button {
         }
     }
 
-    pub fn set_size(&mut self, width: f64, height: f64) {
+    pub fn set_size(&mut self, width: f32, height: f32) {
         self.rect = Rect::new(width, height, self.rect.centre);
     }
 
-    pub fn set_pos(&mut self, centre: (f64, f64)) {
+    pub fn set_pos(&mut self, centre: (f32, f32)) {
         self.rect = Rect::new(self.rect.width, self.rect.height, centre)
     }
 
@@ -77,47 +77,61 @@ impl Button {
 
     // }
 
-    // pub fn anim_rect(&self, progress: f64, ctx: Context, gl: &mut GlGraphics) -> &Button {
-    //     let mut draw_line = |points: [f64; 4]| {
-    //         Line::new_round(self.colour, self.thickness).draw(
-    //             points,
-    //             &ctx.draw_state,
-    //             ctx.transform,
-    //             gl,
-    //         )
-    //     };
+    pub fn anim_rect(&self, progress: f32, ctx: &mut Context) -> &Button {
+        let mut mesh = MeshBuilder::new();
 
-    //     let map = |val: f64, start, end| (val.clamp(start, end) - start) / (end - start);
+        let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
+            mesh.line(&[from, to], self.thickness, self.colour).unwrap();
+        };
+        let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
 
-    //     // Bottom
-    //     draw_line([
-    //         self.rect.left,
-    //         self.rect.bottom,
-    //         self.rect.left + self.rect.width * map(progress, 0.0, 0.25),
-    //         self.rect.bottom,
-    //     ]);
-    //     // Left
-    //     draw_line([
-    //         self.rect.right,
-    //         self.rect.bottom,
-    //         self.rect.right,
-    //         self.rect.bottom - self.rect.height * map(progress, 0.25, 0.50),
-    //     ]);
-    //     // Top
-    //     draw_line([
-    //         self.rect.right,
-    //         self.rect.top,
-    //         self.rect.right - self.rect.width * map(progress, 0.50, 0.75),
-    //         self.rect.top,
-    //     ]);
-    //     // Right
-    //     draw_line([
-    //         self.rect.left,
-    //         self.rect.top,
-    //         self.rect.left,
-    //         self.rect.top + self.rect.height * map(progress, 0.75, 1.0),
-    //     ]);
+        // Offset since lines would otherwise draw to the middle point of corners
+        let offset = self.thickness / 2.0;
 
-    //     self
-    // }
+        // Skip drawing to avoid an error (and optimise) if there's degenerate geometry
+        // Requires a small tolerance greater than just 0
+        if progress >= 0.001 {
+            // Bottom
+            draw_line(
+                glam::vec2(self.rect.left, self.rect.bottom),
+                glam::vec2(
+                    self.rect.left + (self.rect.width + offset) * map(progress, 0.0, 0.25),
+                    self.rect.bottom,
+                ),
+            );
+
+            // Right
+            draw_line(
+                glam::vec2(self.rect.right, self.rect.bottom),
+                glam::vec2(
+                    self.rect.right,
+                    self.rect.bottom - (self.rect.height + offset) * map(progress, 0.25, 0.50),
+                ),
+            );
+
+            // Top
+            draw_line(
+                glam::vec2(self.rect.right, self.rect.top),
+                glam::vec2(
+                    self.rect.right - (self.rect.width + offset) * map(progress, 0.5, 0.75),
+                    self.rect.top,
+                ),
+            );
+
+            // Left
+            draw_line(
+                glam::vec2(self.rect.left, self.rect.top),
+                glam::vec2(
+                    self.rect.left,
+                    self.rect.top + self.rect.height * map(progress, 0.75, 1.0),
+                ),
+            );
+
+            let test = mesh.build(ctx).unwrap();
+            // graphics::draw(ctx, &test, (glam::vec2(1.0, 1.0), 1.0, graphics::Color::GREEN)).unwrap();
+            graphics::draw(ctx, &test, DrawParam::new()).unwrap();
+        }
+
+        self
+    }
 }

@@ -1,15 +1,11 @@
-use std::arch::x86_64::_MM_FROUND_CUR_DIRECTION;
 use std::borrow::Borrow;
+use std::time::Duration;
 
-use ggez::conf;
-use ggez::conf::FullscreenType;
-use ggez::conf::WindowMode;
-use ggez::event;
-use ggez::event::EventLoop;
-use ggez::graphics;
-use ggez::graphics::DrawParam;
+use ggez::conf::{self, FullscreenType, WindowMode};
+use ggez::event::{self, EventLoop};
+use ggez::graphics::{self, Color, DrawParam};
 use ggez::winit::dpi::LogicalSize;
-use ggez::{Context, GameResult};
+use ggez::{timer, Context, GameResult};
 
 use glam::Vec2;
 
@@ -23,7 +19,6 @@ use crate::button::Button;
 mod button;
 
 const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
-const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
 struct UI {
     logout: Button,
@@ -32,7 +27,8 @@ struct UI {
 }
 
 pub struct MainState {
-    time: f64,
+    dt: Duration,
+    time: Duration,
     pos: [f64; 2],
     ui: UI,
     font: graphics::Font,
@@ -48,12 +44,13 @@ impl MainState {
         let font = graphics::Font::new_glyph_font_bytes(ctx, &bytes).unwrap();
 
         let state = MainState {
-            time: 0.0,
+            dt: Duration::new(0, 0),
+            time: Duration::new(0, 0),
             pos: [0.0, 0.0],
             ui: UI {
-                logout: Button::new_empty(WHITE, 0.5),
-                sleep: Button::new_empty(WHITE, 0.5),
-                power: Button::new_empty(WHITE, 0.5),
+                logout: Button::new_empty(Color::WHITE, 2.),
+                sleep: Button::new_empty(Color::WHITE, 2.),
+                power: Button::new_empty(Color::WHITE, 2.),
             },
             font,
         };
@@ -63,7 +60,7 @@ impl MainState {
 }
 
 #[inline]
-fn anim<F: EasingFunction>(function: impl Borrow<F>, seconds: f64, offset: f64, time: f64) -> f64 {
+fn anim<F: EasingFunction>(function: impl Borrow<F>, seconds: f32, offset: f32, time: f32) -> f32 {
     return ease(
         function,
         0.0,
@@ -77,19 +74,29 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // Clear the screen.
         graphics::clear(ctx, BACKGROUND.into());
 
-        // let transform = ctx.transform;
-        // let anim_time = 0.7;
+        let anim_time = 2.7;
 
-        // self.ui
-        //     .logout
-        //     .anim_rect(anim(EaseInOut, anim_time, 0.0, self.time), ctx, gl)
+        // let mesh = graphics::Mesh::new_line(
+        //     ctx,
+        //     &[glam::vec2(100., 100.), glam::vec2(30., 50.)],
+        //     1.,
+        //     Color::WHITE,
+        // )?;
+        // graphics::draw(ctx, &mesh, (glam::vec2(0., 0.),))?;
+
+        self.ui.logout.anim_rect(
+            anim(EaseInOut, anim_time, 0.0, self.time.as_secs_f32()),
+            ctx,
+        );
         //     .draw_label("test", glyph, ctx, gl);
-        // self.ui
-        //     .sleep
-        //     .anim_rect(anim(EaseInOut, anim_time, 0.3, self.time), ctx, gl);
-        // self.ui
-        //     .power
-        //     .anim_rect(anim(EaseInOut, anim_time, 0.6, self.time), ctx, gl);
+        self.ui.sleep.anim_rect(
+            anim(EaseInOut, anim_time, 0.3, self.time.as_secs_f32()),
+            ctx,
+        );
+        self.ui.power.anim_rect(
+            anim(EaseInOut, anim_time, 0.6, self.time.as_secs_f32()),
+            ctx,
+        );
 
         let text = graphics::Text::new((
             format!("fps: {}", ggez::timer::fps(ctx).round()),
@@ -105,7 +112,26 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         // self.ui.logout.set_size(self.ui.logout.rect.width * 1.001, self.ui.logout.rect.height * 1.001);
+
+        self.dt = timer::delta(ctx);
+        self.time = timer::time_since_start(ctx);
         Ok(())
+    }
+
+    fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
+        // Button sizes get set here, since a resize event is fired on first draw (I think)
+        let button_size = width / 6.0;
+        let grid_width = width / 6.0;
+        let grid_height = height / 2.0;
+
+        self.ui.logout.set_size(button_size, button_size);
+        self.ui.logout.set_pos((1.5 * grid_width, grid_height));
+
+        self.ui.sleep.set_size(button_size, button_size);
+        self.ui.sleep.set_pos((3.0 * grid_width, grid_height));
+
+        self.ui.power.set_size(button_size, button_size);
+        self.ui.power.set_pos((4.5 * grid_width, grid_height));
     }
 }
 
@@ -138,56 +164,8 @@ fn main() -> GameResult {
 
     let game = MainState::new(&mut ctx)?;
     event::run(ctx, event_loop, game)
-    // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
-    // let size = EventLoop::new().primary_monitor().unwrap().size();
-
-    // let settings = WindowSettings::new("Logout-HUD", [size.width, size.height])
-    //     .graphics_api(opengl)
-    //     .vsync(true)
-    //     .fullscreen(true)
-    //     .resizable(false)
-    //     .decorated(false)
-    //     .transparent(true)
-    //     .exit_on_esc(true);
-
-    // let mut window: GlutinWindow = settings.build().unwrap();
-
-    // let gwindow = window.ctx.window();
 
     // let mut sequence = keyframes![
     // (0.0, 0.0),
     // (1.)]
-
-    // let mut events = Events::new(EventSettings::new());
-
-    // while let Some(e) = events.next(&mut window) {
-    //     if let Some(pos) = e.mouse_cursor_args() {
-    //         app.pos = pos;
-    //     }
-
-    //     if let Some(args) = e.render_args() {
-    //         app.render(&args, &mut glyph_cache, &mut gl);
-    //         app.fps = fps.tick();
-    //     }
-
-    //     if let Some(args) = e.update_args() {
-    //         app.update(&args);
-    //         app.ups = ups.tick();
-    //     }
-
-    //     if let Some(args) = e.resize_args() {
-    //         let button_size = args.window_size[0] / 6.0;
-    //         let grid_width = args.window_size[0] / 6.0;
-    //         let grid_height = args.window_size[1] / 2.0;
-
-    //         app.ui.logout.set_size(button_size, button_size);
-    //         app.ui.logout.set_pos((1.5 * grid_width, grid_height));
-
-    //         app.ui.sleep.set_size(button_size, button_size);
-    //         app.ui.sleep.set_pos((3.0 * grid_width, grid_height));
-
-    //         app.ui.power.set_size(button_size, button_size);
-    //         app.ui.power.set_pos((4.5 * grid_width, grid_height));
-    //     }
-    // }
 }
