@@ -1,18 +1,15 @@
 [package]
-name = "logout-rs"
+name = "informant"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]
-name = "logout-rs"
+name = "informant"
 
 [dependencies]
-piston = "0.53.0"
-piston2d-graphics = "0.42.0"
-pistoncore-glutin_window = "0.70.1"
-piston2d-opengl_graphics = "0.81.0"
-fps_counter = "2.0.0"
-winit = "0.24.0"
+ggez = {path = "../ggez"} # "0.7"
+# winit = "0.24.0"
+glam = { version = "0.20.5", features = ["mint"] }
 keyframe = "1.0.4"
 fontconfig = "0.5.0"
