@@ -8,7 +8,7 @@ edition = "2021"
 name = "informant"
 
 [dependencies]
-ggez = {path = "../ggez"} # "0.7"
+ggez = {git = "https://github.com/Cosmic-Goat/ggez"} # "0.7"
 # winit = "0.24.0"
 glam = { version = "0.20.5", features = ["mint"] }
 keyframe = "1.0.4"

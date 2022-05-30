@@ -844,6 +844,7 @@ dependencies = [
 [[package]]
 name = "ggez"
 version = "0.7.0"
+source = "git+https://github.com/Cosmic-Goat/ggez#0fdf7018e049f7990b38699ef16ac754bf19f05b"
 dependencies = [
  "approx",
  "bitflags",
