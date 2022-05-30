@@ -1,8 +1,9 @@
 use std::borrow::Borrow;
+use std::process::Command;
 use std::time::Duration;
 
 use ggez::conf::{self, FullscreenType};
-use ggez::event::{self, EventLoop};
+use ggez::event::{self, EventLoop, KeyCode, KeyMods};
 use ggez::graphics::{self, Color};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameResult};
@@ -135,6 +136,22 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
         self.ui.power.set_size(button_size, button_size);
         self.ui.power.set_pos((4.5 * grid_width, grid_height));
+    }
+
+    fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, _mods: KeyMods, _repeat: bool) {
+        match key {
+            // TODO: Make a config for keymap
+            KeyCode::L => {
+                let c = Command::new("sh")
+                    .arg("-c")
+                    .arg("echo hello")
+                    .output()
+                    .expect("failed to execute process");
+                println!("{}", String::from_utf8(c.stdout).unwrap());
+            }
+            KeyCode::Escape => event::quit(ctx),
+            _ => (),
+        };
     }
 }
 
