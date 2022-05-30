@@ -30,27 +30,33 @@ pub struct MainState {
     time: Duration,
     pos: [f64; 2],
     ui: UI,
+    scale_factor: f32,
     font: graphics::Font,
 }
 
 impl MainState {
-    fn new(ctx: &mut Context) -> GameResult<MainState> {
+    fn new(ctx: &mut Context, scale_factor: f32) -> GameResult<MainState> {
         let fc = Fontconfig::new().unwrap();
+        // TODO: Make this part of the config
         let font = fc.find("iosevka", Some("italic")).unwrap();
         println!("{}", font.path.to_str().unwrap());
 
         let bytes = std::fs::read(font.path).unwrap();
         let font = graphics::Font::new_glyph_font_bytes(ctx, &bytes).unwrap();
 
+        // TODO: Make this part of the config
+        let thickness = 2.0 * scale_factor;
+
         let state = MainState {
             dt: Duration::new(0, 0),
             time: Duration::new(0, 0),
             pos: [0.0, 0.0],
             ui: UI {
-                logout: Button::new_empty(String::from("Logout"), Color::WHITE, 2.),
-                sleep: Button::new_empty(String::from("Sleep"), Color::WHITE, 2.),
-                power: Button::new_empty(String::from("Power"), Color::WHITE, 2.),
+                logout: Button::new_empty(String::from("Logout"), Color::WHITE, thickness),
+                sleep: Button::new_empty(String::from("Sleep"), Color::WHITE, thickness),
+                power: Button::new_empty(String::from("Power"), Color::WHITE, thickness),
             },
+            scale_factor,
             font,
         };
 
@@ -78,7 +84,8 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // Clear the screen.
         graphics::clear(ctx, BACKGROUND.into());
 
-        let anim_time = 1.7;
+        let anim_time = 1.0;
+        let delay = 0.2;
 
         // let mesh = graphics::Mesh::new_line(
         //     ctx,
@@ -88,19 +95,21 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // )?;
         // graphics::draw(ctx, &mesh, (glam::vec2(0., 0.),))?;
 
+        let font_size = 32.0 * self.scale_factor;
+
         self.ui
             .logout
             .anim_rect(anim(EaseInOut, anim_time, 0.0, self.time), ctx)?
-            .draw_label(self.font, 32.0, ctx)?;
+            .draw_label(self.font, font_size, ctx)?;
 
         self.ui
             .sleep
-            .anim_rect(anim(EaseInOut, anim_time, 0.3, self.time), ctx)?
-            .draw_label(self.font, 32.0, ctx)?;
+            .anim_rect(anim(EaseInOut, anim_time, delay, self.time), ctx)?
+            .draw_label(self.font, font_size, ctx)?;
         self.ui
             .power
-            .anim_rect(anim(EaseInOut, anim_time, 0.6, self.time), ctx)?
-            .draw_label(self.font, 32.0, ctx)?;
+            .anim_rect(anim(EaseInOut, anim_time, delay * 2.0, self.time), ctx)?
+            .draw_label(self.font, font_size, ctx)?;
 
         let text = graphics::Text::new((
             format!("fps: {}", ggez::timer::fps(ctx).round()),
@@ -140,7 +149,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, _mods: KeyMods, _repeat: bool) {
         match key {
-            // TODO: Make a config for keymap
+            // TODO: Make a config for keymap and shell
             KeyCode::L => {
                 let c = Command::new("sh")
                     .arg("-c")
@@ -159,7 +168,7 @@ fn main() -> GameResult {
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
     // TODO: Make this a part of the config
-    const FULLSCREEN: FullscreenType = FullscreenType::True;
+    const FULLSCREEN: FullscreenType = FullscreenType::Desktop;
 
     let cb = ggez::ContextBuilder::new("informant", "cosmicdoge").window_mode(
         conf::WindowMode::default()
@@ -169,8 +178,10 @@ fn main() -> GameResult {
     );
     let (mut ctx, event_loop) = cb.build()?;
 
+    let window = graphics::window(&ctx);
+    let scale = window.scale_factor() as f32;
+
     if FULLSCREEN != FullscreenType::True {
-        let window = graphics::window(&ctx);
         let monitor = window.current_monitor().unwrap();
         let monitor_width = (monitor.size().width as f64 / monitor.scale_factor()) as i32;
         let monitor_height = (monitor.size().height as f64 / monitor.scale_factor()) as i32;
@@ -182,7 +193,7 @@ fn main() -> GameResult {
         window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
 
-    let game = MainState::new(&mut ctx)?;
+    let game = MainState::new(&mut ctx, scale)?;
     event::run(ctx, event_loop, game)
 
     // let mut sequence = keyframes![
