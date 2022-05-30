@@ -64,8 +64,8 @@ impl Button {
         self.rect = Rect::new(width, height, self.rect.centre);
     }
 
-    pub fn set_pos(&mut self, centre: (f32, f32)) {
-        self.rect = Rect::new(self.rect.width, self.rect.height, centre)
+    pub fn set_pos(&mut self, x: f32, y: f32) {
+        self.rect = Rect::new(self.rect.width, self.rect.height, (x, y))
     }
 
     pub fn draw_label(&self, font: Font, size: f32, ctx: &mut Context) -> GameResult<&Button> {

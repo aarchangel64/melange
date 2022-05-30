@@ -25,6 +25,12 @@ struct UI {
     power: Button,
 }
 
+impl UI {
+    fn buttons(&mut self) -> [&mut Button; 3] {
+        [&mut self.logout, &mut self.sleep, &mut self.power]
+    }
+}
+
 pub struct MainState {
     dt: Duration,
     time: Duration,
@@ -86,30 +92,13 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
         let anim_time = 1.0;
         let delay = 0.2;
-
-        // let mesh = graphics::Mesh::new_line(
-        //     ctx,
-        //     &[glam::vec2(100., 100.), glam::vec2(30., 50.)],
-        //     1.,
-        //     Color::WHITE,
-        // )?;
-        // graphics::draw(ctx, &mesh, (glam::vec2(0., 0.),))?;
-
         let font_size = 32.0 * self.scale_factor;
 
-        self.ui
-            .logout
-            .anim_rect(anim(EaseInOut, anim_time, 0.0, self.time), ctx)?
-            .draw_label(self.font, font_size, ctx)?;
-
-        self.ui
-            .sleep
-            .anim_rect(anim(EaseInOut, anim_time, delay, self.time), ctx)?
-            .draw_label(self.font, font_size, ctx)?;
-        self.ui
-            .power
-            .anim_rect(anim(EaseInOut, anim_time, delay * 2.0, self.time), ctx)?
-            .draw_label(self.font, font_size, ctx)?;
+        for (i, button) in self.ui.buttons().iter().enumerate() {
+            button
+                .anim_rect(anim(EaseInOut, anim_time, delay * i as f32, self.time), ctx)?
+                .draw_label(self.font, font_size, ctx)?;
+        }
 
         let text = graphics::Text::new((
             format!("fps: {}", ggez::timer::fps(ctx).round()),
@@ -137,14 +126,10 @@ impl event::EventHandler<ggez::GameError> for MainState {
         let grid_width = width / 6.0;
         let grid_height = height / 2.0;
 
-        self.ui.logout.set_size(button_size, button_size);
-        self.ui.logout.set_pos((1.5 * grid_width, grid_height));
-
-        self.ui.sleep.set_size(button_size, button_size);
-        self.ui.sleep.set_pos((3.0 * grid_width, grid_height));
-
-        self.ui.power.set_size(button_size, button_size);
-        self.ui.power.set_pos((4.5 * grid_width, grid_height));
+        for (i, button) in self.ui.buttons().iter_mut().enumerate() {
+            button.set_size(button_size, button_size);
+            button.set_pos((i + 1) as f32 * 1.5 * grid_width, grid_height);
+        }
     }
 
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, _mods: KeyMods, _repeat: bool) {
