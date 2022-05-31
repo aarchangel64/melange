@@ -26,23 +26,24 @@ impl Rect {
             bottom: centre.1 + height / 2.0,
         }
     }
+
+    pub fn inside(&self, x: f32, y: f32) -> bool {
+        x < self.right && x > self.left && y > self.top && y < self.bottom
+    }
 }
 
 pub struct Button {
     label: String,
     colour: Color,
+    draw_colour: Color,
     thickness: f32,
     rect: Rect,
+    is_hovered: bool,
 }
 
 impl Button {
     pub fn new_empty(label: String, colour: Color, thickness: f32) -> Button {
-        Button {
-            label,
-            colour,
-            thickness,
-            rect: Rect::new(1.0, 1.0, (1.0, 1.0)),
-        }
+        Button::new(label, colour, thickness, (1.0, 1.0), (1.0, 1.0))
     }
 
     pub fn new(
@@ -55,8 +56,10 @@ impl Button {
         Button {
             label,
             colour,
+            draw_colour: colour,
             thickness,
             rect: Rect::new(width, height, centre),
+            is_hovered: false,
         }
     }
 
@@ -87,13 +90,29 @@ impl Button {
         Ok(self)
     }
 
-    pub fn anim_rect(&self, progress: f32, ctx: &mut Context) -> GameResult<&Button> {
-        let mut mesh = MeshBuilder::new();
+    pub fn hover(&mut self, mouse_x: f32, mouse_y: f32) {
+        self.is_hovered = self.rect.inside(mouse_x, mouse_y);
 
-        let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
-            mesh.line(&[from, to], self.thickness, self.colour).unwrap();
+        // if (self.is_hovered != self.rect.inside(mouse_x, mouse_y)) {
+        //     if
+        // }
+
+        self.draw_colour = if self.rect.inside(mouse_x, mouse_y) {
+            Color::RED
+        } else {
+            self.colour
         };
+    }
+
+    pub fn draw(&self, progress: f32, ctx: &mut Context) -> GameResult<&Button> {
         let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
+        let mut mesh = MeshBuilder::new();
+        let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
+            mesh.line(&[from, to], self.thickness, self.draw_colour)
+                .unwrap();
+        };
+
+        // self.draw_colour = map(progress, self.colour.to_rgba(), Color::RED.to_rgba());
 
         // Offset since lines would otherwise draw to the middle point of corners
         let offset = self.thickness / 2.0;

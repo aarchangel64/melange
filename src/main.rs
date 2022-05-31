@@ -6,7 +6,7 @@ use ggez::conf::{self, FullscreenType};
 use ggez::event::{self, EventLoop, KeyCode, KeyMods};
 use ggez::graphics::{self, Color};
 use ggez::winit::dpi::LogicalSize;
-use ggez::{timer, Context, GameResult};
+use ggez::{timer, Context, GameError, GameResult};
 
 use keyframe::functions::EaseInOut;
 
@@ -34,7 +34,7 @@ impl UI {
 pub struct MainState {
     dt: Duration,
     time: Duration,
-    pos: [f64; 2],
+    pos: (f32, f32),
     ui: UI,
     scale_factor: f32,
     font: graphics::Font,
@@ -56,7 +56,7 @@ impl MainState {
         let state = MainState {
             dt: Duration::new(0, 0),
             time: Duration::new(0, 0),
-            pos: [0.0, 0.0],
+            pos: (0.0, 0.0),
             ui: UI {
                 logout: Button::new_empty(String::from("Logout"), Color::WHITE, thickness),
                 sleep: Button::new_empty(String::from("Sleep"), Color::WHITE, thickness),
@@ -85,7 +85,7 @@ fn anim<F: EasingFunction>(
     );
 }
 
-impl event::EventHandler<ggez::GameError> for MainState {
+impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Clear the screen.
         graphics::clear(ctx, BACKGROUND.into());
@@ -96,12 +96,17 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
         for (i, button) in self.ui.buttons().iter().enumerate() {
             button
-                .anim_rect(anim(EaseInOut, anim_time, delay * i as f32, self.time), ctx)?
+                .draw(anim(EaseInOut, anim_time, delay * i as f32, self.time), ctx)?
                 .draw_label(self.font, font_size, ctx)?;
         }
 
         let text = graphics::Text::new((
-            format!("fps: {}", ggez::timer::fps(ctx).round()),
+            format!(
+                "fps: {}, mouse: {} {}",
+                ggez::timer::fps(ctx).round(),
+                self.pos.0,
+                self.pos.1
+            ),
             self.font,
             48.0,
         ));
@@ -146,6 +151,32 @@ impl event::EventHandler<ggez::GameError> for MainState {
             KeyCode::Escape => event::quit(ctx),
             _ => (),
         };
+    }
+
+    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
+        // Mouse coordinates are PHYSICAL coordinates, but here we want logical coordinates.
+
+        // If you simply use the initial coordinate system, then physical and logical
+        // coordinates are identical.
+        self.pos.0 = x;
+        self.pos.1 = y;
+
+        for (i, button) in self.ui.buttons().iter_mut().enumerate() {
+            button.hover(x, y);
+        }
+
+        // If you change your screen coordinate system you need to calculate the
+        // logical coordinates like this:
+        /*
+        let screen_rect = graphics::screen_coordinates(_ctx);
+        let size = graphics::window(_ctx).inner_size();
+        self.pos_x = (x / (size.width  as f32)) * screen_rect.w + screen_rect.x;
+        self.pos_y = (y / (size.height as f32)) * screen_rect.h + screen_rect.y;
+        */
+        // println!(
+        //     "Mouse motion, x: {}, y: {}, relative x: {}, relative y: {}",
+        //     x, y, xrel, yrel
+        // );
     }
 }
 
