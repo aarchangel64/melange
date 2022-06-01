@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::process::Command;
 use std::time::Duration;
 
@@ -11,10 +10,10 @@ use ggez::{timer, Context, GameError, GameResult};
 use keyframe::functions::EaseInOut;
 
 use fontconfig::Fontconfig;
-use keyframe::{ease, EasingFunction};
 
 use crate::button::Button;
 
+mod anim;
 mod button;
 
 const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
@@ -70,21 +69,6 @@ impl MainState {
     }
 }
 
-#[inline]
-fn anim<F: EasingFunction>(
-    function: impl Borrow<F>,
-    seconds: f32,
-    offset: f32,
-    time: Duration,
-) -> f32 {
-    return ease(
-        function,
-        0.0,
-        1.0,
-        ((time.as_secs_f32() - offset) / seconds).clamp(0.0, 1.0),
-    );
-}
-
 impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Clear the screen.
@@ -96,7 +80,7 @@ impl event::EventHandler<GameError> for MainState {
 
         for (i, button) in self.ui.buttons().iter().enumerate() {
             button
-                .draw(anim(EaseInOut, anim_time, delay * i as f32, self.time), ctx)?
+                .draw(anim_time, delay * i as f32, self.time, ctx)?
                 .draw_label(self.font, font_size, ctx)?;
         }
 

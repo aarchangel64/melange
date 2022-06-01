@@ -1,7 +1,12 @@
+use std::time::Duration;
+
 use ggez::{
     graphics::{self, Color, DrawParam, Font, MeshBuilder},
     Context, GameResult,
 };
+use keyframe::functions::EaseInOut;
+
+use crate::anim;
 
 pub struct Rect {
     width: f32,
@@ -104,7 +109,15 @@ impl Button {
         };
     }
 
-    pub fn draw(&self, progress: f32, ctx: &mut Context) -> GameResult<&Button> {
+    pub fn draw(
+        &self,
+        anim_time: f32,
+        delay: f32,
+        time: Duration,
+        ctx: &mut Context,
+    ) -> GameResult<&Button> {
+        let progress = anim::run(EaseInOut, anim_time, delay, time);
+
         let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
         let mut mesh = MeshBuilder::new();
         let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
