@@ -3,11 +3,12 @@ use std::time::Duration;
 
 use ggez::conf::{self, FullscreenType};
 use ggez::event::{self, EventLoop, KeyCode, KeyMods};
-use ggez::graphics::{self, Color};
+use ggez::graphics::{self, Color, Font};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
+use settings::Settings;
 
 use crate::button::Button;
 
@@ -35,21 +36,22 @@ pub struct MainState {
     pos: (f32, f32),
     ui: UI,
     scale_factor: f32,
-    font: graphics::Font,
+    font: Font,
+    config: Settings,
 }
 
 impl MainState {
-    fn new(ctx: &mut Context, scale_factor: f32) -> GameResult<MainState> {
+    fn new(ctx: &mut Context, scale_factor: f32, settings: Settings) -> GameResult<MainState> {
         let fc = Fontconfig::new().unwrap();
-        // TODO: Make this part of the config
-        let font = fc.find("iosevka", Some("italic")).unwrap();
+        let font = fc
+            .find(&settings.font.family, Some(&settings.font.style))
+            .unwrap();
         println!("{}", font.path.to_str().unwrap());
 
         let bytes = std::fs::read(font.path).unwrap();
-        let font = graphics::Font::new_glyph_font_bytes(ctx, &bytes).unwrap();
+        let font = Font::new_glyph_font_bytes(ctx, &bytes).unwrap();
 
-        // TODO: Make this part of the config
-        let thickness = 2.0 * scale_factor;
+        let thickness = settings.line.thickness * scale_factor;
 
         let state = MainState {
             dt: Duration::new(0, 0),
@@ -62,6 +64,7 @@ impl MainState {
             },
             scale_factor,
             font,
+            config: settings,
         };
 
         Ok(state)
@@ -75,7 +78,7 @@ impl event::EventHandler<GameError> for MainState {
 
         let anim_time = 1.0;
         let delay = 0.2;
-        let font_size = 32.0 * self.scale_factor;
+        let font_size = self.config.font.size * self.scale_factor;
 
         for (i, button) in self.ui.buttons().iter().enumerate() {
             button
@@ -144,27 +147,15 @@ impl event::EventHandler<GameError> for MainState {
         self.pos.0 = x;
         self.pos.1 = y;
 
-        for (i, button) in self.ui.buttons().iter_mut().enumerate() {
+        for button in self.ui.buttons() {
             button.hover(x, y);
         }
-
-        // If you change your screen coordinate system you need to calculate the
-        // logical coordinates like this:
-        /*
-        let screen_rect = graphics::screen_coordinates(_ctx);
-        let size = graphics::window(_ctx).inner_size();
-        self.pos_x = (x / (size.width  as f32)) * screen_rect.w + screen_rect.x;
-        self.pos_y = (y / (size.height as f32)) * screen_rect.h + screen_rect.y;
-        */
-        // println!(
-        //     "Mouse motion, x: {}, y: {}, relative x: {}, relative y: {}",
-        //     x, y, xrel, yrel
-        // );
     }
 }
 
 fn main() -> GameResult {
-    let settings = settings::Settings::new().unwrap();
+    // TODO: Handle invalid config error
+    let settings = Settings::new().unwrap();
 
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
@@ -200,7 +191,7 @@ fn main() -> GameResult {
         window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
 
-    let game = MainState::new(&mut ctx, scale)?;
+    let game = MainState::new(&mut ctx, scale, settings)?;
     event::run(ctx, event_loop, game)
 
     // let mut sequence = keyframes![

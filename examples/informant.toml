@@ -1,0 +1,9 @@
+fullscreen = true
+
+[font]
+family = "sans"
+# style = "thin"
+size = 24.0
+
+[line]
+thickness = 1.5
