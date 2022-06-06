@@ -7,14 +7,13 @@ use ggez::graphics::{self, Color};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
-use keyframe::functions::EaseInOut;
-
 use fontconfig::Fontconfig;
 
 use crate::button::Button;
 
 mod anim;
 mod button;
+mod settings;
 
 const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
 
@@ -165,23 +164,31 @@ impl event::EventHandler<GameError> for MainState {
 }
 
 fn main() -> GameResult {
+    let settings = settings::Settings::new().unwrap();
+
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
-    // TODO: Make this a part of the config
-    const FULLSCREEN: FullscreenType = FullscreenType::Desktop;
 
-    let cb = ggez::ContextBuilder::new("informant", "cosmicdoge").window_mode(
-        conf::WindowMode::default()
-            .dimensions(size.width as f32, size.height as f32)
-            .fullscreen_type(FULLSCREEN)
-            .transparent(true),
-    );
+    let fullscreen = if settings.fullscreen {
+        FullscreenType::True
+    } else {
+        FullscreenType::Desktop
+    };
+
+    let cb = ggez::ContextBuilder::new("informant", "cosmicdoge")
+        .with_conf_file(false)
+        .window_mode(
+            conf::WindowMode::default()
+                .dimensions(size.width as f32, size.height as f32)
+                .fullscreen_type(fullscreen)
+                .transparent(true),
+        );
     let (mut ctx, event_loop) = cb.build()?;
 
     let window = graphics::window(&ctx);
     let scale = window.scale_factor() as f32;
 
-    if FULLSCREEN != FullscreenType::True {
+    if fullscreen != FullscreenType::True {
         let monitor = window.current_monitor().unwrap();
         let monitor_width = (monitor.size().width as f64 / monitor.scale_factor()) as i32;
         let monitor_height = (monitor.size().height as f64 / monitor.scale_factor()) as i32;
