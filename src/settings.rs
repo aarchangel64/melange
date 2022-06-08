@@ -1,9 +1,6 @@
 use config::{Config, ConfigError, Environment, File};
-use ggez::graphics::Color;
 use serde_derive::Deserialize;
 use std::env;
-
-use crate::button::Button;
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
@@ -30,7 +27,7 @@ pub struct FontConfig {
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct SettingsConstructor {
+pub struct ConfigData {
     pub fullscreen: bool,
     pub shell: String,
     pub buttons: Vec<ButtonConfig>,
@@ -45,8 +42,8 @@ pub struct Settings {
     pub font: FontConfig,
 }
 
-impl SettingsConstructor {
-    pub fn new() -> Result<(Settings, Vec<Button>), ConfigError> {
+impl ConfigData {
+    pub fn new() -> Result<Self, ConfigError> {
         let mut config = Config::builder()
             // Defaults - should never panic since the keys are hardcoded here, hence the ? operator.
             .set_default("fullscreen", false)?
@@ -74,22 +71,6 @@ impl SettingsConstructor {
 
         let s = config.build()?;
 
-        // Deserialize (and thus freeze) the entire configuration
-        // TODO: Lifetimes stuff
-        match s.try_deserialize::<'static, SettingsConstructor>() {
-            Ok(s) => Ok((
-                Settings {
-                    fullscreen: s.fullscreen,
-                    shell: s.shell,
-                    anim: s.anim,
-                    font: s.font,
-                },
-                s.buttons
-                    .iter()
-                    .map(|b| Button::new_empty(b.label.to_owned(), Color::WHITE, b.thickness))
-                    .collect(),
-            )),
-            Err(error) => Err(error),
-        }
+        s.try_deserialize()
     }
 }

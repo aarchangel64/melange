@@ -8,7 +8,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use settings::{Settings, SettingsConstructor};
+use settings::{ConfigData, Settings};
 
 use crate::button::Button;
 
@@ -149,7 +149,22 @@ impl event::EventHandler<GameError> for MainState {
 
 fn main() -> GameResult {
     // TODO: Handle invalid config error
-    let (settings, buttons) = SettingsConstructor::new().unwrap();
+    let settings = ConfigData::new();
+
+    // Deserialize (and thus freeze) the entire configuration
+    let (settings, buttons) = match settings {
+        Ok(s) => (
+            Settings {
+                fullscreen: s.fullscreen,
+                shell: s.shell,
+                anim: s.anim,
+                font: s.font,
+            },
+            s.buttons,
+        ),
+        // TODO: Handle error better (maybe an error popup?)
+        Err(error) => panic!("{}", error),
+    };
 
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
@@ -184,6 +199,12 @@ fn main() -> GameResult {
         window.set_outer_position(pos);
         window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
+
+    let buttons = buttons
+        .iter()
+        // Multiply thickness by scaling factor to scale for DPI
+        .map(|b| Button::new_empty(b.label.to_owned(), Color::WHITE, b.thickness * scale))
+        .collect();
 
     let game = MainState::new(&mut ctx, scale, buttons, settings)?;
     event::run(ctx, event_loop, game)
