@@ -4,6 +4,13 @@ use std::env;
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
+pub struct Anim {
+    pub duration: f32,
+    pub delay: f32,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
 pub struct Font {
     pub family: String,
     pub style: String,
@@ -20,6 +27,7 @@ pub struct Line {
 #[allow(unused)]
 pub struct Settings {
     pub fullscreen: bool,
+    pub anim: Anim,
     pub line: Line,
     pub font: Font,
 }
@@ -27,8 +35,10 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
-            // Defaults - should never panic since the keys are set here, hence the ? operator.
+            // Defaults - should never panic since the keys are hardcoded here, hence the ? operator.
             .set_default("fullscreen", false)?
+            .set_default("anim.duration", 1.0)?
+            .set_default("anim.delay", 0.2)?
             .set_default("line.thickness", 1.5)?
             .set_default("font.size", 24.0)?
             .set_default("font.family", "sans")?

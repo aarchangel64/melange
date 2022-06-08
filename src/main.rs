@@ -76,13 +76,16 @@ impl event::EventHandler<GameError> for MainState {
         // Clear the screen.
         graphics::clear(ctx, BACKGROUND.into());
 
-        let anim_time = 1.0;
-        let delay = 0.2;
         let font_size = self.config.font.size * self.scale_factor;
 
         for (i, button) in self.ui.buttons().iter().enumerate() {
             button
-                .draw(anim_time, delay * i as f32, self.time, ctx)?
+                .draw(
+                    self.config.anim.duration,
+                    self.config.anim.delay * i as f32,
+                    self.time,
+                    ctx,
+                )?
                 .draw_label(self.font, font_size, ctx)?;
         }
 
