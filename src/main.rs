@@ -107,13 +107,15 @@ impl event::EventHandler<GameError> for MainState {
 
     fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
         // Button sizes get set here, since a resize event is fired on first draw (I think)
+        // TODO: Maybe make a system for positioning buttons?
         let button_size = width / 6.0;
         let grid_width = width / 6.0;
         let grid_height = height / 2.0;
+        let n = (self.ui.buttons.len() + 1) as f32;
 
         for (i, button) in self.ui.buttons.iter_mut().enumerate() {
             button.set_size(button_size, button_size);
-            button.set_pos((i + 1) as f32 * 1.5 * grid_width, grid_height);
+            button.set_pos((i + 1) as f32 * width / n, grid_height);
         }
     }
 
@@ -200,6 +202,7 @@ fn main() -> GameResult {
         window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
 
+    // Convert button data from config file into button structs
     let buttons = buttons
         .iter()
         // Multiply thickness by scaling factor to scale for DPI
