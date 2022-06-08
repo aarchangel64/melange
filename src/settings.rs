@@ -1,17 +1,28 @@
 use config::{Config, ConfigError, Environment, File};
+use ggez::graphics::Color;
 use serde_derive::Deserialize;
 use std::env;
 
+use crate::button::Button;
+
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct Anim {
+pub struct AnimConfig {
     pub duration: f32,
     pub delay: f32,
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct Font {
+pub struct ButtonConfig {
+    pub label: String,
+    pub command: String,
+    pub thickness: f32,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct FontConfig {
     pub family: String,
     pub style: String,
     pub size: f32,
@@ -19,24 +30,27 @@ pub struct Font {
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct Line {
-    pub thickness: f32,
+pub struct SettingsConstructor {
+    pub fullscreen: bool,
+    pub shell: String,
+    pub buttons: Vec<ButtonConfig>,
+    pub anim: AnimConfig,
+    pub font: FontConfig,
 }
 
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
 pub struct Settings {
     pub fullscreen: bool,
-    pub anim: Anim,
-    pub line: Line,
-    pub font: Font,
+    pub shell: String,
+    pub anim: AnimConfig,
+    pub font: FontConfig,
 }
 
-impl Settings {
-    pub fn new() -> Result<Self, ConfigError> {
-        let s = Config::builder()
+impl SettingsConstructor {
+    pub fn new() -> Result<(Settings, Vec<Button>), ConfigError> {
+        let mut config = Config::builder()
             // Defaults - should never panic since the keys are hardcoded here, hence the ? operator.
             .set_default("fullscreen", false)?
+            .set_default("shell", "sh")?
             .set_default("anim.duration", 1.0)?
             .set_default("anim.delay", 0.2)?
             .set_default("line.thickness", 1.5)?
@@ -56,10 +70,26 @@ impl Settings {
             )
             // Add in settings from the environment (with a prefix of INFORMANT)
             // Eg.. `INFORMANT_FULLSCREEN=1` would set the `fullscreen` key
-            .add_source(Environment::with_prefix("informant"))
-            .build()?;
+            .add_source(Environment::with_prefix("informant"));
 
-        // Deserialize (and thus freeze) the entire configuration as
-        s.try_deserialize()
+        let s = config.build()?;
+
+        // Deserialize (and thus freeze) the entire configuration
+        // TODO: Lifetimes stuff
+        match s.try_deserialize::<'static, SettingsConstructor>() {
+            Ok(s) => Ok((
+                Settings {
+                    fullscreen: s.fullscreen,
+                    shell: s.shell,
+                    anim: s.anim,
+                    font: s.font,
+                },
+                s.buttons
+                    .iter()
+                    .map(|b| Button::new_empty(b.label.to_owned(), Color::WHITE, b.thickness))
+                    .collect(),
+            )),
+            Err(error) => Err(error),
+        }
     }
 }

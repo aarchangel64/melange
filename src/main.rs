@@ -8,7 +8,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use settings::Settings;
+use settings::{Settings, SettingsConstructor};
 
 use crate::button::Button;
 
@@ -19,15 +19,7 @@ mod settings;
 const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
 
 struct UI {
-    logout: Button,
-    sleep: Button,
-    power: Button,
-}
-
-impl UI {
-    fn buttons(&mut self) -> [&mut Button; 3] {
-        [&mut self.logout, &mut self.sleep, &mut self.power]
-    }
+    buttons: Vec<Button>,
 }
 
 pub struct MainState {
@@ -41,7 +33,12 @@ pub struct MainState {
 }
 
 impl MainState {
-    fn new(ctx: &mut Context, scale_factor: f32, settings: Settings) -> GameResult<MainState> {
+    fn new(
+        ctx: &mut Context,
+        scale_factor: f32,
+        buttons: Vec<Button>,
+        settings: Settings,
+    ) -> GameResult<MainState> {
         let fc = Fontconfig::new().unwrap();
         let font = fc
             .find(&settings.font.family, Some(&settings.font.style))
@@ -51,17 +48,11 @@ impl MainState {
         let bytes = std::fs::read(font.path).unwrap();
         let font = Font::new_glyph_font_bytes(ctx, &bytes).unwrap();
 
-        let thickness = settings.line.thickness * scale_factor;
-
         let state = MainState {
             dt: Duration::new(0, 0),
             time: Duration::new(0, 0),
             pos: (0.0, 0.0),
-            ui: UI {
-                logout: Button::new_empty(String::from("Logout"), Color::WHITE, thickness),
-                sleep: Button::new_empty(String::from("Sleep"), Color::WHITE, thickness),
-                power: Button::new_empty(String::from("Power"), Color::WHITE, thickness),
-            },
+            ui: UI { buttons },
             scale_factor,
             font,
             config: settings,
@@ -78,7 +69,7 @@ impl event::EventHandler<GameError> for MainState {
 
         let font_size = self.config.font.size * self.scale_factor;
 
-        for (i, button) in self.ui.buttons().iter().enumerate() {
+        for (i, button) in self.ui.buttons.iter().enumerate() {
             button
                 .draw(
                     self.config.anim.duration,
@@ -120,7 +111,7 @@ impl event::EventHandler<GameError> for MainState {
         let grid_width = width / 6.0;
         let grid_height = height / 2.0;
 
-        for (i, button) in self.ui.buttons().iter_mut().enumerate() {
+        for (i, button) in self.ui.buttons.iter_mut().enumerate() {
             button.set_size(button_size, button_size);
             button.set_pos((i + 1) as f32 * 1.5 * grid_width, grid_height);
         }
@@ -150,7 +141,7 @@ impl event::EventHandler<GameError> for MainState {
         self.pos.0 = x;
         self.pos.1 = y;
 
-        for button in self.ui.buttons() {
+        for button in &mut self.ui.buttons {
             button.hover(x, y);
         }
     }
@@ -158,7 +149,7 @@ impl event::EventHandler<GameError> for MainState {
 
 fn main() -> GameResult {
     // TODO: Handle invalid config error
-    let settings = Settings::new().unwrap();
+    let (settings, buttons) = SettingsConstructor::new().unwrap();
 
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
@@ -194,7 +185,7 @@ fn main() -> GameResult {
         window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
 
-    let game = MainState::new(&mut ctx, scale, settings)?;
+    let game = MainState::new(&mut ctx, scale, buttons, settings)?;
     event::run(ctx, event_loop, game)
 
     // let mut sequence = keyframes![
