@@ -41,7 +41,7 @@ impl MainState {
     ) -> GameResult<MainState> {
         let fc = Fontconfig::new().unwrap();
         let font = fc
-            .find(&settings.font.family, Some(&settings.font.style))
+            .find(&settings.font.family, settings.font.style.as_deref())
             .unwrap();
         println!("{}", font.path.to_str().unwrap());
 
