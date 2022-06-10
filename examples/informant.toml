@@ -1,5 +1,24 @@
 fullscreen = true
 
+[[buttons]]
+label = "Sleep"
+command = "test"
+# thickness = 1.0
+
+[[buttons]]
+label = "Poweroff"
+command = "test"
+thickness = 1.0
+
+[[buttons]]
+label = "Reboot"
+command = "test"
+thickness = 1.0
+
+[anim]
+duration = 1.5
+delay = 0.5
+
 [font]
 family = "sans"
 # style = "thin"

@@ -14,7 +14,12 @@ pub struct AnimConfig {
 pub struct ButtonConfig {
     pub label: String,
     pub command: String,
+    #[serde(default = "default_thickness")]
     pub thickness: f32,
+}
+
+fn default_thickness() -> f32 {
+    1.0
 }
 
 #[derive(Debug, Deserialize)]
