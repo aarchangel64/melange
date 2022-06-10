@@ -11,7 +11,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use settings::{ConfigData, Settings};
+use settings::{ConfigData, Input, Settings};
 
 use crate::button::Button;
 
@@ -122,20 +122,19 @@ impl event::EventHandler<GameError> for MainState {
         }
     }
 
-    fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, _mods: KeyMods, _repeat: bool) {
-        match key {
-            // TODO: Make a config for keymap and shell
-            KeyCode::L => {
-                let c = Command::new("sh")
-                    .arg("-c")
-                    .arg("echo hello")
-                    .output()
-                    .expect("failed to execute process");
-                println!("{}", String::from_utf8(c.stdout).unwrap());
-            }
-            KeyCode::Escape => event::quit(ctx),
-            _ => (),
-        };
+    fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, mods: KeyMods, _repeat: bool) {
+        if let Some(command) = self.config.keymap.get(&Input { key, mods }) {
+            let output = Command::new(&self.config.shell)
+                .arg("-c")
+                .arg(command)
+                .output()
+                .expect("failed to execute process");
+            print!("{}", String::from_utf8(output.stdout).unwrap());
+        }
+
+        if key == KeyCode::Escape {
+            event::quit(ctx)
+        }
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
@@ -153,23 +152,7 @@ impl event::EventHandler<GameError> for MainState {
 }
 
 fn main() -> GameResult {
-    // TODO: Handle invalid config error
-    let settings = ConfigData::new();
-
-    // Deserialize (and thus freeze) the entire configuration
-    let (settings, buttons) = match settings {
-        Ok(s) => (
-            Settings {
-                fullscreen: s.fullscreen,
-                shell: s.shell,
-                anim: s.anim,
-                font: s.font,
-            },
-            s.buttons,
-        ),
-        // TODO: Handle error better (maybe an error popup?)
-        Err(error) => panic!("{}", error),
-    };
+    let (settings, buttons) = Settings::new();
 
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();

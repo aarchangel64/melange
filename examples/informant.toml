@@ -1,4 +1,4 @@
-fullscreen = true
+fullscreen = false
 
 [[buttons]]
 label = "Sleep"
@@ -14,6 +14,11 @@ thickness = 1.0
 label = "Reboot"
 command = "test"
 thickness = 1.0
+
+[[keymap]]
+key = "L"
+mods = ["SHIFT", "CTRL"]
+command = "echo test"
 
 [anim]
 duration = 1.5

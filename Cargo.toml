@@ -9,6 +9,7 @@ name = "informant"
 
 [dependencies]
 # My fork of ggez with the added ability to create transparent windows
+winit = {version = "0.25", features = ["serde"]}
 ggez = {git = "https://github.com/Cosmic-Goat/ggez"} # "0.7"
 glam = { version = "0.20.5", features = ["mint"] }
 keyframe = "1.0.4"

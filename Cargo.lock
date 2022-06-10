@@ -1214,6 +1214,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "smart-default",
+ "winit",
 ]
 
 [[package]]
@@ -2929,6 +2930,7 @@ dependencies = [
  "percent-encoding",
  "raw-window-handle 0.3.4",
  "scopeguard",
+ "serde",
  "smithay-client-toolkit",
  "wayland-client",
  "winapi",
