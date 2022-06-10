@@ -2,82 +2,51 @@ use config::{Config, ConfigError, Environment, File};
 use serde_derive::Deserialize;
 use std::env;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SmartDefault)]
 #[allow(unused)]
 #[serde(default)]
 pub struct AnimConfig {
+    #[default = 1.0]
     pub duration: f32,
+    #[default = 0.2]
     pub delay: f32,
 }
 
-impl Default for AnimConfig {
-    fn default() -> Self {
-        Self {
-            duration: 1.0,
-            delay: 0.2,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SmartDefault)]
 #[allow(unused)]
 #[serde(default)]
 pub struct ButtonConfig {
+    #[default = "I'm a Button! :D"]
     pub label: String,
     pub command: String,
+    #[default = 1.5]
     pub thickness: f32,
 }
 
-impl Default for ButtonConfig {
-    fn default() -> Self {
-        Self {
-            label: "I'm a Button! :D".to_string(),
-            command: String::new(),
-            thickness: 1.5,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SmartDefault)]
 #[allow(unused)]
 #[serde(default)]
 pub struct FontConfig {
+    #[default = "sans"]
     pub family: String,
+    #[default(None)]
     pub style: Option<String>,
+    #[default = 24.0]
     pub size: f32,
 }
 
-impl Default for FontConfig {
-    fn default() -> Self {
-        Self {
-            family: String::from("sans"),
-            style: None,
-            size: 24.0,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SmartDefault)]
 #[allow(unused)]
 #[serde(default)]
 pub struct ConfigData {
+    #[default = true]
     pub fullscreen: bool,
+    #[default = "sh"]
     pub shell: String,
+    #[default(_code = "vec![ButtonConfig::default()]")]
     pub buttons: Vec<ButtonConfig>,
     pub anim: AnimConfig,
     pub font: FontConfig,
-}
-
-impl Default for ConfigData {
-    fn default() -> Self {
-        Self {
-            fullscreen: true,
-            shell: "sh".to_string(),
-            buttons: vec![ButtonConfig::default()],
-            anim: AnimConfig::default(),
-            font: FontConfig::default(),
-        }
-    }
 }
 
 pub struct Settings {

@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate smart_default;
+
 use std::process::Command;
 use std::time::Duration;
 
