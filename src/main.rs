@@ -124,9 +124,9 @@ impl event::EventHandler<GameError> for MainState {
 
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, mods: KeyMods, _repeat: bool) {
         if let Some(command) = self.config.keymap.get(&Input { key, mods }) {
-            let output = Command::new(&self.config.shell)
-                .arg("-c")
-                .arg(command)
+            let mut command = command.split(' ');
+            let output = Command::new(command.next().unwrap_or(""))
+                .args(command)
                 .output()
                 .expect("failed to execute process");
             print!("{}", String::from_utf8(output.stdout).unwrap());
@@ -197,8 +197,4 @@ fn main() -> GameResult {
 
     let game = MainState::new(&mut ctx, scale, buttons, settings)?;
     event::run(ctx, event_loop, game)
-
-    // let mut sequence = keyframes![
-    // (0.0, 0.0),
-    // (1.)]
 }

@@ -4,7 +4,6 @@ use serde_derive::Deserialize;
 use std::{collections::HashMap, env};
 
 #[derive(Debug, Deserialize, SmartDefault)]
-#[allow(unused)]
 #[serde(default)]
 pub struct AnimConfig {
     #[default = 1.0]
@@ -14,7 +13,6 @@ pub struct AnimConfig {
 }
 
 #[derive(Debug, Deserialize, SmartDefault)]
-#[allow(unused)]
 #[serde(default)]
 pub struct ButtonConfig {
     #[default = "I'm a Button! :D"]
@@ -25,7 +23,6 @@ pub struct ButtonConfig {
 }
 
 #[derive(Debug, Deserialize, SmartDefault)]
-#[allow(unused)]
 #[serde(default)]
 pub struct FontConfig {
     #[default = "sans"]
@@ -45,6 +42,7 @@ pub enum Modifiers {
 }
 
 impl Modifiers {
+    // Map Enum values to the keymods bitflag
     fn value(&self) -> KeyMods {
         match *self {
             Modifiers::CTRL => KeyMods::CTRL,
@@ -61,34 +59,28 @@ pub struct Input {
     pub mods: KeyMods,
 }
 
-#[derive(Debug, Deserialize, SmartDefault)]
-#[serde(default)]
-pub struct Command {
-    // Random key code because key should probably be specified
-    #[default(KeyCode::Unlabeled)]
+#[derive(Debug, Deserialize)]
+pub struct Keymap {
     pub key: KeyCode,
+    #[serde(default)]
     pub mods: Vec<Modifiers>,
     pub command: String,
 }
 
 #[derive(Debug, Deserialize, SmartDefault)]
-#[allow(unused)]
 #[serde(default)]
 pub struct ConfigData {
     #[default = true]
     pub fullscreen: bool,
-    #[default = "sh"]
-    pub shell: String,
     pub anim: AnimConfig,
     pub font: FontConfig,
     #[default(_code = "vec![ButtonConfig::default()]")]
     pub buttons: Vec<ButtonConfig>,
-    pub keymap: Vec<Command>,
+    pub keymap: Vec<Keymap>,
 }
 
 pub struct Settings {
     pub fullscreen: bool,
-    pub shell: String,
     pub anim: AnimConfig,
     pub font: FontConfig,
     pub keymap: HashMap<Input, String>,
@@ -104,24 +96,23 @@ impl Settings {
                 let mut map = HashMap::new();
                 let mut keymod = KeyMods::empty();
 
-                for command in s.keymap {
-                    for m in command.mods {
+                for keymap in s.keymap {
+                    for m in keymap.mods {
                         keymod |= m.value();
                     }
 
                     map.insert(
                         Input {
-                            key: command.key,
+                            key: keymap.key,
                             mods: keymod,
                         },
-                        command.command,
+                        keymap.command,
                     );
                 }
 
                 (
                     Settings {
                         fullscreen: s.fullscreen,
-                        shell: s.shell,
                         anim: s.anim,
                         font: s.font,
                         keymap: map,
