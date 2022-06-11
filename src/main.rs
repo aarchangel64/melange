@@ -11,7 +11,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use keyframe::functions::{EaseOut, Linear};
+use keyframe::functions::EaseOut;
 use settings::{Input, Settings};
 
 use crate::button::Button;
@@ -68,7 +68,7 @@ impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Colour for the fading-in background effect
         let colour = keyframe::ease(
-            Linear,
+            EaseOut,
             mint::Vector4::from_slice(&self.config.background.fade_in_color),
             mint::Vector4::from_slice(&self.config.background.color),
             self.time.as_secs_f32() / self.config.background.fade_duration,

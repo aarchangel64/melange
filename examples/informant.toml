@@ -8,11 +8,11 @@ fullscreen = false
 
 [background]
 # The color of the background.
-color = [0.10, 0.10, 0.10, 0.6]
+color = [0.11, 0.11, 0.11, 0.7]
 # The inital color that the background fades in from.
 fade_in_color = [0.0, 0.0, 0.0, 0.0]
 # The duration of the fade in effect for the background. Set to 0.0 to disable the fade.
-fade_duration = 1.5
+fade_duration = 1.0
 
 [anim]
 duration = 1.5

@@ -70,11 +70,11 @@ pub struct Keymap {
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
 pub struct Background {
-    #[default([0.1, 0.1, 0.1, 0.6])]
+    #[default([0.11, 0.11, 0.11, 0.7])]
     pub color: [f32; 4],
     #[default([0.0, 0.0, 0.0, 0.0])]
     pub fade_in_color: [f32; 4],
-    #[default = 1.5]
+    #[default = 1.0]
     pub fade_duration: f32,
 }
 
