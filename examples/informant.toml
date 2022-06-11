@@ -18,29 +18,33 @@ fade_duration = 1.0
 duration = 1.5
 delay = 0.5
 
+# Specify which font to use here. Uses fontconfig to find fonts on your system.
 [font]
+# The name, or family, of the font.
 family = "sans"
+# The style of the font, e.g. italic, bold, thin
 style = "thin"
+# The size of the font. Note that this scales with your DPI.
 size = 24.0
-
-[line]
-thickness = 1.5
 
 # Buttons are specified via an array, as shown here.
 # You can add or remove as many as you want.
 [[buttons]]
+# The text to be shown underneath the button
 label = "Sleep"
-command = "test"
+# The command to be run when the button is clicked.
+command = "echo sleep"
+# The thickness of the button's borders
 thickness = 1.0
 
 [[buttons]]
 label = "Poweroff"
-command = "test"
+command = "echo poweroff"
 thickness = 1.0
 
 [[buttons]]
 label = "Reboot"
-command = "test"
+command = "echo reboot"
 thickness = 1.0
 
 # Hotkey shortcuts are also specified via an array, as shown here.
