@@ -1,4 +1,5 @@
 fullscreen = false
+background = [0.1, 0.1, 0.1, 0.7]
 
 [[buttons]]
 label = "Sleep"
@@ -17,7 +18,7 @@ thickness = 1.0
 
 [[keymap]]
 key = "L"
-mods = ["SHIFT", "CTRL"]
+# mods = ["SHIFT", "CTRL"]
 command = "echo test"
 
 [anim]
@@ -26,7 +27,7 @@ delay = 0.5
 
 [font]
 family = "sans"
-# style = "thin"
+style = "thin"
 size = 24.0
 
 [line]

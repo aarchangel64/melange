@@ -10,6 +10,8 @@ pub struct AnimConfig {
     pub duration: f32,
     #[default = 0.2]
     pub delay: f32,
+    #[default = 3.0]
+    pub fade_duration: f32,
 }
 
 #[derive(Debug, Deserialize, SmartDefault)]
@@ -72,6 +74,8 @@ pub struct Keymap {
 pub struct ConfigData {
     #[default = true]
     pub fullscreen: bool,
+    #[default([0.17, 0.17, 0.17, 0.7])]
+    pub background: [f32; 4],
     pub anim: AnimConfig,
     pub font: FontConfig,
     #[default(_code = "vec![ButtonConfig::default()]")]
@@ -79,8 +83,10 @@ pub struct ConfigData {
     pub keymap: Vec<Keymap>,
 }
 
+// TODO: Make a 'general' config struct
 pub struct Settings {
     pub fullscreen: bool,
+    pub background: [f32; 4],
     pub anim: AnimConfig,
     pub font: FontConfig,
     pub keymap: HashMap<Input, String>,
@@ -113,6 +119,7 @@ impl Settings {
                 (
                     Settings {
                         fullscreen: s.fullscreen,
+                        background: s.background,
                         anim: s.anim,
                         font: s.font,
                         keymap: map,

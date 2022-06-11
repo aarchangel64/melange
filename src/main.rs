@@ -11,6 +11,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
+use keyframe::functions::{EaseInOutCubic, EaseOut, Linear};
 use settings::{ConfigData, Input, Settings};
 
 use crate::button::Button;
@@ -18,8 +19,6 @@ use crate::button::Button;
 mod anim;
 mod button;
 mod settings;
-
-const BACKGROUND: [f32; 4] = [0.1, 0.1, 0.1, 0.6];
 
 struct UI {
     buttons: Vec<Button>,
@@ -67,8 +66,9 @@ impl MainState {
 
 impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // Clear the screen.
-        graphics::clear(ctx, BACKGROUND.into());
+        // Clear the screen, using a fading-in colour effect for the background
+        let fade = anim::run(EaseOut, self.config.anim.fade_duration, 0.0, self.time);
+        graphics::clear(ctx, self.config.background.map(|c| c * fade).into());
 
         let font_size = self.config.font.size * self.scale_factor;
 
@@ -101,8 +101,6 @@ impl event::EventHandler<GameError> for MainState {
     }
 
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        // self.ui.logout.set_size(self.ui.logout.rect.width * 1.001, self.ui.logout.rect.height * 1.001);
-
         self.dt = timer::delta(ctx);
         self.time = timer::time_since_start(ctx);
         Ok(())
@@ -110,7 +108,7 @@ impl event::EventHandler<GameError> for MainState {
 
     fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
         // Button sizes get set here, since a resize event is fired on first draw (I think)
-        // TODO: Maybe make a system for positioning buttons?
+        // TODO: Maybe make a system for positioning buttons? Auto positioning, manual, etc
         let button_size = width / 6.0;
         let grid_width = width / 6.0;
         let grid_height = height / 2.0;
