@@ -11,8 +11,8 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use keyframe::functions::{EaseInOutCubic, EaseOut, Linear};
-use settings::{ConfigData, Input, Settings};
+use keyframe::functions::{EaseOut, Linear};
+use settings::{Input, Settings};
 
 use crate::button::Button;
 
@@ -66,9 +66,16 @@ impl MainState {
 
 impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // Clear the screen, using a fading-in colour effect for the background
-        let fade = anim::run(EaseOut, self.config.anim.fade_duration, 0.0, self.time);
-        graphics::clear(ctx, self.config.background.map(|c| c * fade).into());
+        // Colour for the fading-in background effect
+        let colour = keyframe::ease(
+            Linear,
+            mint::Vector4::from_slice(&self.config.background.fade_in_color),
+            mint::Vector4::from_slice(&self.config.background.color),
+            self.time.as_secs_f32() / self.config.background.fade_duration,
+        );
+
+        // Clear the screen using the background colour
+        graphics::clear(ctx, [colour.x, colour.y, colour.z, colour.w].into());
 
         let font_size = self.config.font.size * self.scale_factor;
 

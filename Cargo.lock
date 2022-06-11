@@ -1211,6 +1211,7 @@ dependencies = [
  "ggez",
  "glam",
  "keyframe",
+ "mint",
  "serde",
  "serde_derive",
  "smart-default",

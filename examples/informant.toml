@@ -1,25 +1,18 @@
+# This config file shows the availble options for informant,
+# as well as their default values used if not provided via config.
+#
+# Only options that are marked as required are actually required
+# in order to run the program without error.
+
 fullscreen = false
-background = [0.1, 0.1, 0.1, 0.7]
 
-[[buttons]]
-label = "Sleep"
-command = "test"
-# thickness = 1.0
-
-[[buttons]]
-label = "Poweroff"
-command = "test"
-thickness = 1.0
-
-[[buttons]]
-label = "Reboot"
-command = "test"
-thickness = 1.0
-
-[[keymap]]
-key = "L"
-# mods = ["SHIFT", "CTRL"]
-command = "echo test"
+[background]
+# The color of the background.
+color = [0.10, 0.10, 0.10, 0.6]
+# The inital color that the background fades in from.
+fade_in_color = [0.0, 0.0, 0.0, 0.0]
+# The duration of the fade in effect for the background. Set to 0.0 to disable the fade.
+fade_duration = 1.5
 
 [anim]
 duration = 1.5
@@ -32,3 +25,29 @@ size = 24.0
 
 [line]
 thickness = 1.5
+
+# Buttons are specified via an array, as shown here.
+# You can add or remove as many as you want.
+[[buttons]]
+label = "Sleep"
+command = "test"
+thickness = 1.0
+
+[[buttons]]
+label = "Poweroff"
+command = "test"
+thickness = 1.0
+
+[[buttons]]
+label = "Reboot"
+command = "test"
+thickness = 1.0
+
+# Hotkey shortcuts are also specified via an array, as shown here.
+# You can add or remove as many as you want.
+[[keymap]]
+# The key to bind the command to. REQUIRED.
+key = "L"
+# mods = ["SHIFT", "CTRL"]
+# The command to run when the shortcut is detected. REQUIRED
+command = "echo test"

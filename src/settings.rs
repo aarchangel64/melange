@@ -5,13 +5,11 @@ use std::{collections::HashMap, env};
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
-pub struct AnimConfig {
+pub struct Anim {
     #[default = 1.0]
     pub duration: f32,
     #[default = 0.2]
     pub delay: f32,
-    #[default = 3.0]
-    pub fade_duration: f32,
 }
 
 #[derive(Debug, Deserialize, SmartDefault)]
@@ -26,7 +24,7 @@ pub struct ButtonConfig {
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
-pub struct FontConfig {
+pub struct Font {
     #[default = "sans"]
     pub family: String,
     #[default(None)]
@@ -71,13 +69,23 @@ pub struct Keymap {
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
+pub struct Background {
+    #[default([0.1, 0.1, 0.1, 0.6])]
+    pub color: [f32; 4],
+    #[default([0.0, 0.0, 0.0, 0.0])]
+    pub fade_in_color: [f32; 4],
+    #[default = 1.5]
+    pub fade_duration: f32,
+}
+
+#[derive(Debug, Deserialize, SmartDefault)]
+#[serde(default)]
 pub struct ConfigData {
     #[default = true]
     pub fullscreen: bool,
-    #[default([0.17, 0.17, 0.17, 0.7])]
-    pub background: [f32; 4],
-    pub anim: AnimConfig,
-    pub font: FontConfig,
+    pub background: Background,
+    pub anim: Anim,
+    pub font: Font,
     #[default(_code = "vec![ButtonConfig::default()]")]
     pub buttons: Vec<ButtonConfig>,
     pub keymap: Vec<Keymap>,
@@ -86,9 +94,9 @@ pub struct ConfigData {
 // TODO: Make a 'general' config struct
 pub struct Settings {
     pub fullscreen: bool,
-    pub background: [f32; 4],
-    pub anim: AnimConfig,
-    pub font: FontConfig,
+    pub background: Background,
+    pub anim: Anim,
+    pub font: Font,
     pub keymap: HashMap<Input, String>,
 }
 
