@@ -97,7 +97,7 @@ pub struct Settings {
     pub background: Background,
     pub anim: Anim,
     pub font: Font,
-    pub keymap: HashMap<Input, String>,
+    pub keymap: HashMap<Input, Vec<String>>,
 }
 
 impl Settings {
@@ -120,7 +120,11 @@ impl Settings {
                             key: keymap.key,
                             mods: keymod,
                         },
-                        keymap.command,
+                        keymap
+                            .command
+                            .split_whitespace()
+                            .map(str::to_string)
+                            .collect(),
                     );
                 }
 

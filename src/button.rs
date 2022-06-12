@@ -39,20 +39,22 @@ impl Rect {
 
 pub struct Button {
     label: String,
+    pub command: Vec<String>,
     colour: Color,
     draw_colour: Color,
     thickness: f32,
     rect: Rect,
-    is_hovered: bool,
+    pub is_hovered: bool,
 }
 
 impl Button {
-    pub fn new_empty(label: String, colour: Color, thickness: f32) -> Button {
-        Button::new(label, colour, thickness, (1.0, 1.0), (1.0, 1.0))
+    pub fn new_empty(label: String, command: Vec<String>, colour: Color, thickness: f32) -> Button {
+        Button::new(label, command, colour, thickness, (1.0, 1.0), (1.0, 1.0))
     }
 
     pub fn new(
         label: String,
+        command: Vec<String>,
         colour: Color,
         thickness: f32,
         (width, height): (f32, f32),
@@ -60,6 +62,7 @@ impl Button {
     ) -> Button {
         Button {
             label,
+            command,
             colour,
             draw_colour: colour,
             thickness,

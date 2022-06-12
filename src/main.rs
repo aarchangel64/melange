@@ -11,7 +11,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use keyframe::functions::EaseOut;
+use keyframe::functions::{EaseIn, EaseOut};
 use settings::{Input, Settings};
 
 use crate::button::Button;
@@ -62,13 +62,21 @@ impl MainState {
 
         Ok(state)
     }
+
+    fn execute(command: &Vec<String>) {
+        let output = Command::new(&command[0])
+            .args(&command[1..])
+            .output()
+            .expect("failed to execute process");
+        print!("{}", String::from_utf8(output.stdout).unwrap());
+    }
 }
 
 impl event::EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Colour for the fading-in background effect
         let colour = keyframe::ease(
-            EaseOut,
+            EaseIn,
             mint::Vector4::from_slice(&self.config.background.fade_in_color),
             mint::Vector4::from_slice(&self.config.background.color),
             self.time.as_secs_f32() / self.config.background.fade_duration,
@@ -129,12 +137,7 @@ impl event::EventHandler<GameError> for MainState {
 
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, mods: KeyMods, _repeat: bool) {
         if let Some(command) = self.config.keymap.get(&Input { key, mods }) {
-            let mut command = command.split(' ');
-            let output = Command::new(command.next().unwrap_or(""))
-                .args(command)
-                .output()
-                .expect("failed to execute process");
-            print!("{}", String::from_utf8(output.stdout).unwrap());
+            MainState::execute(command);
         }
 
         if key == KeyCode::Escape {
@@ -152,6 +155,20 @@ impl event::EventHandler<GameError> for MainState {
 
         for button in &mut self.ui.buttons {
             button.hover(x, y);
+        }
+    }
+
+    fn mouse_button_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        _button: event::MouseButton,
+        _x: f32,
+        _y: f32,
+    ) {
+        for button in &mut self.ui.buttons {
+            if button.is_hovered {
+                MainState::execute(&button.command)
+            }
         }
     }
 }
@@ -197,7 +214,18 @@ fn main() -> GameResult {
     let buttons = buttons
         .iter()
         // Multiply thickness by scaling factor to scale for DPI
-        .map(|b| Button::new_empty(b.label.to_owned(), Color::WHITE, b.thickness * scale))
+        .map(|b| {
+            Button::new_empty(
+                b.label.to_owned(),
+                b.command
+                    .to_owned()
+                    .split_whitespace()
+                    .map(str::to_string)
+                    .collect(),
+                Color::WHITE,
+                b.thickness * scale,
+            )
+        })
         .collect();
 
     let game = MainState::new(&mut ctx, scale, buttons, settings)?;
