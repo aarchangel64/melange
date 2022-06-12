@@ -11,7 +11,7 @@ use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
-use keyframe::functions::{EaseIn, EaseOut};
+use keyframe::functions::EaseIn;
 use settings::{Input, Settings};
 
 use crate::button::Button;
@@ -63,9 +63,9 @@ impl MainState {
         Ok(state)
     }
 
-    fn execute(command: &Vec<String>) {
-        let output = Command::new(&command[0])
-            .args(&command[1..])
+    fn execute(inputs: &Vec<String>) {
+        let output = Command::new(&inputs[0])
+            .args(&inputs[1..])
             .output()
             .expect("failed to execute process");
         print!("{}", String::from_utf8(output.stdout).unwrap());
@@ -125,7 +125,7 @@ impl event::EventHandler<GameError> for MainState {
         // Button sizes get set here, since a resize event is fired on first draw (I think)
         // TODO: Maybe make a system for positioning buttons? Auto positioning, manual, etc
         let button_size = width / 6.0;
-        let grid_width = width / 6.0;
+        // let grid_width = width / 6.0;
         let grid_height = height / 2.0;
         let n = (self.ui.buttons.len() + 1) as f32;
 
@@ -217,11 +217,7 @@ fn main() -> GameResult {
         .map(|b| {
             Button::new_empty(
                 b.label.to_owned(),
-                b.command
-                    .to_owned()
-                    .split_whitespace()
-                    .map(str::to_string)
-                    .collect(),
+                b.command.to_owned(),
                 Color::WHITE,
                 b.thickness * scale,
             )

@@ -22,6 +22,12 @@ pub struct ButtonConfig {
     pub thickness: f32,
 }
 
+pub struct ButtonData {
+    pub label: String,
+    pub command: Vec<String>,
+    pub thickness: f32,
+}
+
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
 pub struct Font {
@@ -101,7 +107,11 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new() -> (Self, Vec<ButtonConfig>) {
+    fn make_command(string: &str) -> Vec<String> {
+        string.split_whitespace().map(&str::to_string).collect()
+    }
+
+    pub fn new() -> (Self, Vec<ButtonData>) {
         // TODO: Handle invalid config error
         let settings = ConfigData::new();
 
@@ -120,11 +130,7 @@ impl Settings {
                             key: keymap.key,
                             mods: keymod,
                         },
-                        keymap
-                            .command
-                            .split_whitespace()
-                            .map(str::to_string)
-                            .collect(),
+                        Settings::make_command(&keymap.command),
                     );
                 }
 
@@ -136,7 +142,14 @@ impl Settings {
                         font: s.font,
                         keymap: map,
                     },
-                    s.buttons,
+                    s.buttons
+                        .iter()
+                        .map(|b| ButtonData {
+                            label: b.label.to_owned(),
+                            command: Settings::make_command(&b.command),
+                            thickness: b.thickness,
+                        })
+                        .collect(),
                 )
             }
             // TODO: Handle error better (maybe an error popup?)
@@ -147,7 +160,7 @@ impl Settings {
 
 impl ConfigData {
     pub fn new() -> Result<Self, ConfigError> {
-        let mut config = Config::builder()
+        let config = Config::builder()
             // Merge in the user's config file, if it exists
             .add_source(
                 File::with_name(&format!(
