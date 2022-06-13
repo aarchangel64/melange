@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use ggez::conf::{self, FullscreenType};
 use ggez::event::{self, EventLoop, KeyCode, KeyMods};
-use ggez::graphics::{self, Color, Font, Image};
+use ggez::graphics::{self, Color, Font, Image, Rect};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
@@ -175,40 +175,50 @@ impl event::EventHandler<GameError> for MainState {
 }
 
 fn main() -> GameResult {
-    // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
-    let size = EventLoop::new().primary_monitor().unwrap().size();
-
     let cb = ggez::ContextBuilder::new("informant", "cosmicdoge")
         .modules(conf::ModuleConf {
             gamepad: false,
             audio: false,
         })
         .with_conf_file(false)
-        .window_mode(
-            conf::WindowMode::default()
-                .dimensions(size.width as f32, size.height as f32)
-                // .fullscreen_type(fullscreen)
-                .transparent(true),
-        );
+        .window_mode(conf::WindowMode::default().transparent(true));
     let (mut ctx, event_loop) = cb.build()?;
 
     let (settings, buttons) = Settings::new(&ctx);
-    // TODO: Handle setting fullscreen result?
-    graphics::set_fullscreen(&mut ctx, settings.fullscreen);
 
     let window = graphics::window(&ctx);
     let scale = window.scale_factor() as f32;
+    let monitor = window.current_monitor().unwrap();
+
+    let monitor_width = monitor.size().width as f32;
+    let monitor_height = monitor.size().height as f32;
+
+    graphics::set_fullscreen(&mut ctx, settings.fullscreen);
+
+    if settings.fullscreen != FullscreenType::Windowed {
+        // Set window size to cover entire screen.
+        graphics::set_drawable_size(&mut ctx, monitor_width, monitor_height);
+        graphics::set_screen_coordinates(
+            &mut ctx,
+            Rect {
+                x: 0.,
+                y: 0.,
+                w: monitor_width,
+                h: monitor_height,
+            },
+        );
+    }
+
     if settings.fullscreen == FullscreenType::Desktop {
-        let monitor = window.current_monitor().unwrap();
-        let monitor_width = (monitor.size().width as f64 / monitor.scale_factor()) as i32;
-        let monitor_height = (monitor.size().height as f64 / monitor.scale_factor()) as i32;
+        let window = graphics::window(&ctx);
         let pos = monitor.position();
         window.set_always_on_top(true);
         window.set_decorations(false);
         window.set_resizable(false);
         window.set_outer_position(pos);
-        window.set_inner_size(LogicalSize::new(monitor_width, monitor_height));
     }
+
+    // TODO: Handle setting fullscreen result?
 
     // Convert button data from config file into button structs
     let buttons = buttons

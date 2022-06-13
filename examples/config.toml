@@ -36,7 +36,8 @@ label = "Sleep"
 command = "echo sleep"
 # The icon to be shown inside the button. This is relative to informant's config directory.
 # Note that there is a leading slash required.
-image = "/test.jpg"
+image = "/test2.png"
+image_size = 0.5
 # The thickness of the button's borders
 thickness = 1.0
 # The color of the button's borders. Takes a u32 in RGBA format, so use the last two places for transparency.
