@@ -34,9 +34,14 @@ size = 24.0
 label = "Sleep"
 # The command to be run when the button is clicked.
 command = "echo sleep"
+# The icon to be shown inside the button. This is relative to informant's config directory.
+# Note that there is a leading slash required.
+image = "/test.jpg"
 # The thickness of the button's borders
 thickness = 1.0
-image = "/test.jpg"
+# The color of the button's borders. Takes a u32 in RGBA format, so use the last two places for transparency.
+# For example, 0x00FF00_80 would be green borders at half transparency.
+color = 0xFFFFFF_FF
 
 
 [[buttons]]

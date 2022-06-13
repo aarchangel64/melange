@@ -212,7 +212,7 @@ fn main() -> GameResult {
     // Convert button data from config file into button structs
     let buttons = buttons
         .iter()
-        .map(|b| Button::new_empty(&mut ctx, b, Color::WHITE, scale))
+        .map(|b| Button::new_empty(&mut ctx, b, scale))
         .collect();
 
     let game = MainState::new(&mut ctx, scale, buttons, settings)?;

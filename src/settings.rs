@@ -1,6 +1,7 @@
 use config::{Config, ConfigError, Environment, File};
 use ggez::{
     conf::FullscreenType,
+    graphics::Color,
     input::keyboard::{KeyCode, KeyMods},
     Context,
 };
@@ -26,6 +27,8 @@ pub struct ButtonConfig {
     pub image: Option<String>,
     #[default = 90.0]
     pub image_size: f32,
+    #[default = 0xffffffff]
+    pub color: u32,
     #[default = 1.5]
     pub thickness: f32,
 }
@@ -35,6 +38,7 @@ pub struct ButtonData {
     pub command: Vec<String>,
     pub image: Option<String>,
     pub image_size: f32,
+    pub color: Color,
     pub thickness: f32,
 }
 
@@ -156,9 +160,10 @@ impl Settings {
                         .iter()
                         .map(|b| ButtonData {
                             label: b.label.to_owned(),
+                            command: Settings::make_command(&b.command),
                             image: b.image.to_owned(),
                             image_size: b.image_size,
-                            command: Settings::make_command(&b.command),
+                            color: Color::from_rgba_u32(b.color),
                             thickness: b.thickness,
                         })
                         .collect(),

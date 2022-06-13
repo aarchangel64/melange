@@ -43,25 +43,24 @@ pub struct Button {
     image: Option<Image>,
     // How much of the button should the image take up, in percentage.
     image_size: f32,
-    colour: Color,
-    draw_colour: Color,
+    color: Color,
+    draw_color: Color,
     thickness: f32,
     rect: Rect,
     pub is_hovered: bool,
 }
 
 impl Button {
-    pub fn new_empty(ctx: &mut Context, data: &ButtonData, colour: Color, scale: f32) -> Button {
-        Button::new(ctx, data, colour, (1.0, 1.0), (1.0, 1.0), scale)
+    pub fn new_empty(ctx: &mut Context, data: &ButtonData, dpi_scale: f32) -> Button {
+        Button::new(ctx, data, (1.0, 1.0), (1.0, 1.0), dpi_scale)
     }
 
     pub fn new(
         ctx: &mut Context,
         data: &ButtonData,
-        colour: Color,
         (width, height): (f32, f32),
         centre: (f32, f32),
-        scale: f32,
+        dpi_scale: f32,
     ) -> Button {
         Button {
             label: data.label.to_owned(),
@@ -69,9 +68,9 @@ impl Button {
             image: data.image.as_ref().map(|s| Image::new(ctx, &s).unwrap()),
             image_size: data.image_size,
             // Multiply thickness by scaling factor to scale for DPI
-            thickness: data.thickness * scale,
-            colour,
-            draw_colour: colour,
+            thickness: data.thickness * dpi_scale,
+            color: data.color,
+            draw_color: data.color,
             rect: Rect::new(width, height, centre),
             is_hovered: false,
         }
@@ -111,10 +110,10 @@ impl Button {
         //     if
         // }
 
-        self.draw_colour = if self.rect.inside(mouse_x, mouse_y) {
+        self.draw_color = if self.rect.inside(mouse_x, mouse_y) {
             Color::RED
         } else {
-            self.colour
+            self.color
         };
     }
 
@@ -146,7 +145,7 @@ impl Button {
         let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
         let mut mesh = MeshBuilder::new();
         let mut draw_line = |from: glam::Vec2, to: glam::Vec2| {
-            mesh.line(&[from, to], self.thickness, self.draw_colour)
+            mesh.line(&[from, to], self.thickness, self.draw_color)
                 .unwrap();
         };
 
