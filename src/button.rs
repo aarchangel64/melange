@@ -41,7 +41,7 @@ pub struct Button {
     label: String,
     pub command: Vec<String>,
     image: Option<Image>,
-    // How much of the button should the image take up, in percentage.
+    // How much of the button should the image take up, scaled to 1.0.
     image_size: f32,
     color: Color,
     draw_color: Color,
@@ -174,13 +174,16 @@ impl Button {
                 self.rect.width / image.width() as f32
             } else {
                 self.rect.height / image.height() as f32
-            };
+            } * self.image_size;
+
+            let top = (self.rect.height - image.height() as f32 * scale) / 2.0;
+            let left = (self.rect.width - image.width() as f32 * scale) / 2.0;
 
             graphics::draw(
                 ctx,
                 image,
                 DrawParam::default()
-                    .dest(glam::vec2(self.rect.left, self.rect.top))
+                    .dest(glam::vec2(self.rect.left + left, self.rect.top + top))
                     .scale(glam::vec2(scale, scale)),
             )?;
         }

@@ -25,7 +25,7 @@ pub struct ButtonConfig {
     pub command: String,
     #[default(None)]
     pub image: Option<String>,
-    #[default = 90.0]
+    #[default = 0.9]
     pub image_size: f32,
     #[default = 0xffffffff]
     pub color: u32,
