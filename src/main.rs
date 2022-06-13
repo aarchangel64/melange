@@ -95,6 +95,7 @@ impl event::EventHandler<GameError> for MainState {
                     self.time,
                     ctx,
                 )?
+                .draw_image(ctx)?
                 .draw_label(self.font, font_size, ctx)?;
         }
 

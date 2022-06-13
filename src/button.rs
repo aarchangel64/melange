@@ -65,6 +65,7 @@ impl Button {
         Button {
             label: data.label.to_owned(),
             command: data.command.to_owned(),
+            // TODO: remove need for leading slash
             image: data.image.as_ref().map(|s| Image::new(ctx, &s).unwrap()),
             image_size: data.image_size,
             // Multiply thickness by scaling factor to scale for DPI
@@ -82,25 +83,6 @@ impl Button {
 
     pub fn set_pos(&mut self, x: f32, y: f32) {
         self.rect = Rect::new(self.rect.width, self.rect.height, (x, y))
-    }
-
-    pub fn draw_label(&self, font: Font, size: f32, ctx: &mut Context) -> GameResult<&Button> {
-        let mut text = graphics::Text::new((self.label.as_str(), font, size));
-        text.set_bounds(
-            glam::vec2(self.rect.width, f32::INFINITY),
-            graphics::Align::Center,
-        );
-
-        graphics::draw(
-            ctx,
-            &text,
-            (glam::vec2(
-                self.rect.left,
-                self.rect.bottom + self.rect.height * 0.05,
-            ),),
-        )?;
-
-        Ok(self)
     }
 
     pub fn hover(&mut self, mouse_x: f32, mouse_y: f32) {
@@ -124,22 +106,6 @@ impl Button {
         time: Duration,
         ctx: &mut Context,
     ) -> GameResult<&Button> {
-        if let Some(image) = &self.image {
-            let scale = if image.width() > image.height() {
-                self.rect.width / image.width() as f32
-            } else {
-                self.rect.height / image.height() as f32
-            };
-
-            graphics::draw(
-                ctx,
-                image,
-                DrawParam::default()
-                    .dest(glam::vec2(self.rect.left, self.rect.top))
-                    .scale(glam::vec2(scale, scale)),
-            );
-        }
-
         let progress = anim::run(EaseInOut, anim_time, delay, time);
 
         let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
@@ -197,6 +163,46 @@ impl Button {
             // graphics::draw(ctx, &test, (glam::vec2(1.0, 1.0), 1.0, graphics::Color::GREEN)).unwrap();
             graphics::draw(ctx, &test, DrawParam::new()).unwrap();
         }
+
+        Ok(self)
+    }
+
+    pub fn draw_image(&self, ctx: &mut Context) -> GameResult<&Button> {
+        // TODO: add fading in effect
+        if let Some(image) = &self.image {
+            let scale = if image.width() > image.height() {
+                self.rect.width / image.width() as f32
+            } else {
+                self.rect.height / image.height() as f32
+            };
+
+            graphics::draw(
+                ctx,
+                image,
+                DrawParam::default()
+                    .dest(glam::vec2(self.rect.left, self.rect.top))
+                    .scale(glam::vec2(scale, scale)),
+            )?;
+        }
+
+        Ok(self)
+    }
+
+    pub fn draw_label(&self, font: Font, size: f32, ctx: &mut Context) -> GameResult<&Button> {
+        let mut text = graphics::Text::new((self.label.as_str(), font, size));
+        text.set_bounds(
+            glam::vec2(self.rect.width, f32::INFINITY),
+            graphics::Align::Center,
+        );
+
+        graphics::draw(
+            ctx,
+            &text,
+            (glam::vec2(
+                self.rect.left,
+                self.rect.bottom + self.rect.height * 0.05,
+            ),),
+        )?;
 
         Ok(self)
     }
