@@ -5,9 +5,8 @@ use std::process::Command;
 use std::time::Duration;
 
 use ggez::conf::{self, FullscreenType};
-use ggez::event::{self, EventLoop, KeyCode, KeyMods};
-use ggez::graphics::{self, Color, Font, Image, Rect};
-use ggez::winit::dpi::LogicalSize;
+use ggez::event::{self, KeyCode, KeyMods};
+use ggez::graphics::{self, Font, Rect};
 use ggez::{timer, Context, GameError, GameResult};
 
 use fontconfig::Fontconfig;
@@ -176,12 +175,18 @@ impl event::EventHandler<GameError> for MainState {
 
 fn main() -> GameResult {
     let cb = ggez::ContextBuilder::new("informant", "cosmicdoge")
+        // Disable modules we don't need.
         .modules(conf::ModuleConf {
             gamepad: false,
             audio: false,
         })
+        // Don't search for a ggez config file, since we load our own.
         .with_conf_file(false)
+        // Make window transparent.
         .window_mode(conf::WindowMode::default().transparent(true));
+
+    // Build the loop.
+    // TODO: Handle errors
     let (mut ctx, event_loop) = cb.build()?;
 
     let (settings, buttons) = Settings::new(&ctx);
@@ -193,12 +198,17 @@ fn main() -> GameResult {
     let monitor_width = monitor.size().width as f32;
     let monitor_height = monitor.size().height as f32;
 
-    graphics::set_fullscreen(&mut ctx, settings.fullscreen);
+    if let Err(err) = graphics::set_fullscreen(&mut ctx, settings.fullscreen) {
+        eprintln!("{err}")
+    }
 
+    // Set window size to cover entire screen.
     if settings.fullscreen != FullscreenType::Windowed {
-        // Set window size to cover entire screen.
-        graphics::set_drawable_size(&mut ctx, monitor_width, monitor_height);
-        graphics::set_screen_coordinates(
+        if let Err(err) = graphics::set_drawable_size(&mut ctx, monitor_width, monitor_height) {
+            eprintln!("{err}")
+        }
+
+        if let Err(err) = graphics::set_screen_coordinates(
             &mut ctx,
             Rect {
                 x: 0.,
@@ -206,7 +216,9 @@ fn main() -> GameResult {
                 w: monitor_width,
                 h: monitor_height,
             },
-        );
+        ) {
+            eprintln!("{err}")
+        }
     }
 
     if settings.fullscreen == FullscreenType::Desktop {

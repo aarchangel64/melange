@@ -6,7 +6,7 @@ use ggez::{
     Context,
 };
 use serde_derive::Deserialize;
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
@@ -25,7 +25,7 @@ pub struct ButtonConfig {
     pub command: String,
     #[default(None)]
     pub image: Option<String>,
-    #[default = 0.9]
+    #[default = 0.6]
     pub image_size: f32,
     #[default = 0xffffffff]
     pub color: u32,
@@ -181,8 +181,7 @@ impl ConfigData {
             // Merge in the user's config file, if it exists
             // TODO: Does specifying the format make a difference? to benchmark
             .add_source(
-                File::from(dbg!(ggez::filesystem::user_config_dir(ctx).join("config")))
-                    .required(false),
+                File::from(ggez::filesystem::user_config_dir(ctx).join("config")).required(false),
             )
             // Add in settings from the environment (with a prefix of INFORMANT)
             // Eg.. `INFORMANT_FULLSCREEN=1` would set the `fullscreen` key
