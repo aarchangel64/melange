@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use ggez::conf::{self, FullscreenType};
 use ggez::event::{self, EventLoop, KeyCode, KeyMods};
-use ggez::graphics::{self, Color, Font};
+use ggez::graphics::{self, Color, Font, Image};
 use ggez::winit::dpi::LogicalSize;
 use ggez::{timer, Context, GameError, GameResult};
 
@@ -174,31 +174,30 @@ impl event::EventHandler<GameError> for MainState {
 }
 
 fn main() -> GameResult {
-    let (settings, buttons) = Settings::new();
-
     // Create an eventloop to get the monitor's size, in case some WMs don't respect set_inner_size
     let size = EventLoop::new().primary_monitor().unwrap().size();
 
-    let fullscreen = if settings.fullscreen {
-        FullscreenType::True
-    } else {
-        FullscreenType::Desktop
-    };
-
     let cb = ggez::ContextBuilder::new("informant", "cosmicdoge")
+        .modules(conf::ModuleConf {
+            gamepad: false,
+            audio: false,
+        })
         .with_conf_file(false)
         .window_mode(
             conf::WindowMode::default()
                 .dimensions(size.width as f32, size.height as f32)
-                .fullscreen_type(fullscreen)
+                // .fullscreen_type(fullscreen)
                 .transparent(true),
         );
     let (mut ctx, event_loop) = cb.build()?;
 
+    let (settings, buttons) = Settings::new(&ctx);
+    // TODO: Handle setting fullscreen result?
+    graphics::set_fullscreen(&mut ctx, settings.fullscreen);
+
     let window = graphics::window(&ctx);
     let scale = window.scale_factor() as f32;
-
-    if fullscreen != FullscreenType::True {
+    if settings.fullscreen == FullscreenType::Desktop {
         let monitor = window.current_monitor().unwrap();
         let monitor_width = (monitor.size().width as f64 / monitor.scale_factor()) as i32;
         let monitor_height = (monitor.size().height as f64 / monitor.scale_factor()) as i32;
@@ -218,6 +217,10 @@ fn main() -> GameResult {
             Button::new_empty(
                 b.label.to_owned(),
                 b.command.to_owned(),
+                b.image.as_ref().map(|s| Image::new(&mut ctx, &s).unwrap()),
+                //     .unwrap_or_else(|_| {
+                //     Image::solid(&mut ctx, 100, Color::new(0., 0., 0., 1.)).unwrap()
+                // }),
                 Color::WHITE,
                 b.thickness * scale,
             )

@@ -1,5 +1,9 @@
 use config::{Config, ConfigError, Environment, File};
-use ggez::input::keyboard::{KeyCode, KeyMods};
+use ggez::{
+    conf::FullscreenType,
+    input::keyboard::{KeyCode, KeyMods},
+    Context,
+};
 use serde_derive::Deserialize;
 use std::{collections::HashMap, env};
 
@@ -18,6 +22,8 @@ pub struct ButtonConfig {
     #[default = "I'm a Button! :D"]
     pub label: String,
     pub command: String,
+    #[default(None)]
+    pub image: Option<String>,
     #[default = 1.5]
     pub thickness: f32,
 }
@@ -25,6 +31,7 @@ pub struct ButtonConfig {
 pub struct ButtonData {
     pub label: String,
     pub command: Vec<String>,
+    pub image: Option<String>,
     pub thickness: f32,
 }
 
@@ -87,8 +94,8 @@ pub struct Background {
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
 pub struct ConfigData {
-    #[default = true]
-    pub fullscreen: bool,
+    #[default(FullscreenType::True)]
+    pub fullscreen: FullscreenType,
     pub background: Background,
     pub anim: Anim,
     pub font: Font,
@@ -99,7 +106,7 @@ pub struct ConfigData {
 
 // TODO: Make a 'general' config struct
 pub struct Settings {
-    pub fullscreen: bool,
+    pub fullscreen: FullscreenType,
     pub background: Background,
     pub anim: Anim,
     pub font: Font,
@@ -111,9 +118,9 @@ impl Settings {
         string.split_whitespace().map(&str::to_string).collect()
     }
 
-    pub fn new() -> (Self, Vec<ButtonData>) {
+    pub fn new(ctx: &Context) -> (Self, Vec<ButtonData>) {
         // TODO: Handle invalid config error
-        let settings = ConfigData::new();
+        let settings = ConfigData::new(ctx);
 
         match settings {
             Ok(s) => {
@@ -146,6 +153,7 @@ impl Settings {
                         .iter()
                         .map(|b| ButtonData {
                             label: b.label.to_owned(),
+                            image: b.image.to_owned(),
                             command: Settings::make_command(&b.command),
                             thickness: b.thickness,
                         })
@@ -159,18 +167,13 @@ impl Settings {
 }
 
 impl ConfigData {
-    pub fn new() -> Result<Self, ConfigError> {
+    pub fn new(ctx: &Context) -> Result<Self, ConfigError> {
         let config = Config::builder()
             // Merge in the user's config file, if it exists
+            // TODO: Does specifying the format make a difference? to benchmark
             .add_source(
-                File::with_name(&format!(
-                    "{}/informant",
-                    env::var("XDG_CONFIG_HOME").unwrap_or_else(|_| format!(
-                        "{}/.config",
-                        env::var("HOME").expect("Your $HOME variable isn't set, I think you have bigger problems than this panic.")
-                    ))
-                ))
-                .required(false),
+                File::from(dbg!(ggez::filesystem::user_config_dir(ctx).join("config")))
+                    .required(false),
             )
             // Add in settings from the environment (with a prefix of INFORMANT)
             // Eg.. `INFORMANT_FULLSCREEN=1` would set the `fullscreen` key

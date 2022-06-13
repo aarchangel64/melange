@@ -8,9 +8,9 @@ edition = "2021"
 name = "informant"
 
 [dependencies]
-# My fork of ggez with the added ability to create transparent windows
 winit = {version = "0.25", features = ["serde"]}
-ggez = {git = "https://github.com/Cosmic-Goat/ggez"} # "0.7"
+# My fork of ggez with the added ability to create transparent windows
+ggez = {git = "https://github.com/Cosmic-Goat/ggez", features = ["multithread-image-decoding"]} # "0.7"
 mint = "0.5.9"
 glam = { version = "0.20.5", features = ["mint"] }
 keyframe = {version = "1.0.4", features = ["mint_types"]}

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use ggez::{
-    graphics::{self, Color, DrawParam, Font, MeshBuilder},
+    graphics::{self, Color, DrawParam, Font, Image, MeshBuilder},
     Context, GameResult,
 };
 use keyframe::functions::EaseInOut;
@@ -40,6 +40,7 @@ impl Rect {
 pub struct Button {
     label: String,
     pub command: Vec<String>,
+    image: Option<Image>,
     colour: Color,
     draw_colour: Color,
     thickness: f32,
@@ -48,13 +49,28 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new_empty(label: String, command: Vec<String>, colour: Color, thickness: f32) -> Button {
-        Button::new(label, command, colour, thickness, (1.0, 1.0), (1.0, 1.0))
+    pub fn new_empty(
+        label: String,
+        command: Vec<String>,
+        image: Option<Image>,
+        colour: Color,
+        thickness: f32,
+    ) -> Button {
+        Button::new(
+            label,
+            command,
+            image,
+            colour,
+            thickness,
+            (1.0, 1.0),
+            (1.0, 1.0),
+        )
     }
 
     pub fn new(
         label: String,
         command: Vec<String>,
+        image: Option<Image>,
         colour: Color,
         thickness: f32,
         (width, height): (f32, f32),
@@ -63,6 +79,7 @@ impl Button {
         Button {
             label,
             command,
+            image,
             colour,
             draw_colour: colour,
             thickness,
@@ -119,6 +136,22 @@ impl Button {
         time: Duration,
         ctx: &mut Context,
     ) -> GameResult<&Button> {
+        if let Some(image) = &self.image {
+            let scale = if image.width() > image.height() {
+                self.rect.width / image.width() as f32
+            } else {
+                self.rect.height / image.height() as f32
+            };
+
+            graphics::draw(
+                ctx,
+                image,
+                DrawParam::default()
+                    .dest(glam::vec2(self.rect.left, self.rect.top))
+                    .scale(glam::vec2(scale, scale)),
+            );
+        }
+
         let progress = anim::run(EaseInOut, anim_time, delay, time);
 
         let map = |val: f32, start, end| (val.clamp(start, end) - start) / (end - start);
