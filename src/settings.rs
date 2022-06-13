@@ -24,6 +24,8 @@ pub struct ButtonConfig {
     pub command: String,
     #[default(None)]
     pub image: Option<String>,
+    #[default = 90.0]
+    pub image_size: f32,
     #[default = 1.5]
     pub thickness: f32,
 }
@@ -32,6 +34,7 @@ pub struct ButtonData {
     pub label: String,
     pub command: Vec<String>,
     pub image: Option<String>,
+    pub image_size: f32,
     pub thickness: f32,
 }
 
@@ -154,6 +157,7 @@ impl Settings {
                         .map(|b| ButtonData {
                             label: b.label.to_owned(),
                             image: b.image.to_owned(),
+                            image_size: b.image_size,
                             command: Settings::make_command(&b.command),
                             thickness: b.thickness,
                         })

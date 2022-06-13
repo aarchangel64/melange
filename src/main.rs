@@ -212,19 +212,7 @@ fn main() -> GameResult {
     // Convert button data from config file into button structs
     let buttons = buttons
         .iter()
-        // Multiply thickness by scaling factor to scale for DPI
-        .map(|b| {
-            Button::new_empty(
-                b.label.to_owned(),
-                b.command.to_owned(),
-                b.image.as_ref().map(|s| Image::new(&mut ctx, &s).unwrap()),
-                //     .unwrap_or_else(|_| {
-                //     Image::solid(&mut ctx, 100, Color::new(0., 0., 0., 1.)).unwrap()
-                // }),
-                Color::WHITE,
-                b.thickness * scale,
-            )
-        })
+        .map(|b| Button::new_empty(&mut ctx, b, Color::WHITE, scale))
         .collect();
 
     let game = MainState::new(&mut ctx, scale, buttons, settings)?;

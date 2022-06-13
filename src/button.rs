@@ -6,7 +6,7 @@ use ggez::{
 };
 use keyframe::functions::EaseInOut;
 
-use crate::anim;
+use crate::{anim, settings::ButtonData};
 
 pub struct Rect {
     width: f32,
@@ -41,6 +41,8 @@ pub struct Button {
     label: String,
     pub command: Vec<String>,
     image: Option<Image>,
+    // How much of the button should the image take up, in percentage.
+    image_size: f32,
     colour: Color,
     draw_colour: Color,
     thickness: f32,
@@ -49,40 +51,27 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new_empty(
-        label: String,
-        command: Vec<String>,
-        image: Option<Image>,
-        colour: Color,
-        thickness: f32,
-    ) -> Button {
-        Button::new(
-            label,
-            command,
-            image,
-            colour,
-            thickness,
-            (1.0, 1.0),
-            (1.0, 1.0),
-        )
+    pub fn new_empty(ctx: &mut Context, data: &ButtonData, colour: Color, scale: f32) -> Button {
+        Button::new(ctx, data, colour, (1.0, 1.0), (1.0, 1.0), scale)
     }
 
     pub fn new(
-        label: String,
-        command: Vec<String>,
-        image: Option<Image>,
+        ctx: &mut Context,
+        data: &ButtonData,
         colour: Color,
-        thickness: f32,
         (width, height): (f32, f32),
         centre: (f32, f32),
+        scale: f32,
     ) -> Button {
         Button {
-            label,
-            command,
-            image,
+            label: data.label.to_owned(),
+            command: data.command.to_owned(),
+            image: data.image.as_ref().map(|s| Image::new(ctx, &s).unwrap()),
+            image_size: data.image_size,
+            // Multiply thickness by scaling factor to scale for DPI
+            thickness: data.thickness * scale,
             colour,
             draw_colour: colour,
-            thickness,
             rect: Rect::new(width, height, centre),
             is_hovered: false,
         }
