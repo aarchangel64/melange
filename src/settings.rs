@@ -1,10 +1,4 @@
 use config::{Config, ConfigError, Environment, File};
-use ggez::{
-    conf::FullscreenType,
-    graphics::Color,
-    input::keyboard::{KeyCode, KeyMods},
-    Context,
-};
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 
