@@ -1,8 +1,10 @@
 body {
-  background-color: rgba(20, 20, 20, 0.3);
-  animation: fadein.5s;
+  /* background-color: rgba(20, 20, 20, 0.3); */
+  background-color: rgba(0, 0, 0, 1);
+  animation: fadein 1.5s;
   color: white;
   margin: 0;
+  font-family: "iosevka";
 }
 
 @keyframes fadein {
@@ -16,23 +18,65 @@ body {
 
 .container {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 100vh;
-  grid-gap: 2em;
+  height: 100vh;
+  grid-template:
+    ". . ." 30%
+    "info info ." 10%
+    "sleep shutdown reboot" 30%
+    ". . ." 30% / 1fr 1fr 1fr;
+  grid-column-gap: 2em;
   max-width: 50em;
   margin: auto;
+  padding: 0em 5em;
   align-items: center;
 }
 
-.container button {
-  height: 10em;
+.sleep {
+  grid-area: sleep;
+}
+
+.shutdown {
+  grid-area: shutdown;
+}
+
+.shutdown *,
+.shutdown::after,
+.shutdown::before {
+  animation-delay: 0.3s !important;
+}
+
+.reboot {
+  grid-area: reboot;
+}
+
+.reboot *,
+.reboot::after,
+.reboot::before {
+  animation-delay: 0.6s !important;
 }
 
 .btn {
+  position: relative;
   height: 10em;
   text-align: center;
-  line-height: 10em;
   cursor: pointer;
+}
+
+.btn * {
+  animation: button-anim-after 0.9s forwards;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(1.2, 1.2);
+}
+
+.btn img {
+  height: 6em;
+  padding: 2em;
+}
+
+.btn span {
+  position: relative;
+  top: 1em;
 }
 
 .button-anim {
@@ -40,6 +84,7 @@ body {
   transition: all 0.5s;
   position: relative;
 }
+
 .button-anim::before {
   content: "";
   position: absolute;
@@ -50,10 +95,7 @@ body {
   z-index: 1;
   background-color: rgba(255, 255, 255, 0.2);
   transition: all 0.3s;
-}
-.button-anim:hover::before {
-  opacity: 0;
-  transform: scale(0.5, 0.5);
+  animation: button-anim-before 0.4s forwards;
 }
 .button-anim::after {
   content: "";
@@ -64,11 +106,22 @@ body {
   height: 100%;
   z-index: 1;
   opacity: 0;
-  transition: all 0.3s;
+  transition: all 0.9s;
+  animation: button-anim-after 0.6s forwards;
   border: 1px solid rgba(255, 255, 255, 0.5);
   transform: scale(1.2, 1.2);
 }
-.button-anim:hover::after {
-  opacity: 1;
-  transform: scale(1, 1);
+
+@keyframes button-anim-before {
+  to {
+    opacity: 0;
+    transform: scale(0.5, 0.5);
+  }
+}
+
+@keyframes button-anim-after {
+  to {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
 }

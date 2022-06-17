@@ -5,6 +5,8 @@ use std::env;
 use std::fs::{canonicalize, read};
 use std::process::Command;
 
+use wry::application::event::KeyEvent;
+use wry::application::keyboard::Key;
 use wry::application::window::Fullscreen;
 use wry::{
     application::{
@@ -66,11 +68,7 @@ fn main() -> wry::Result<()> {
         .unwrap()
         .with_transparent(true)
         .with_custom_protocol("wry".into(), move |request| {
-            dbg!(request);
-            // if request.method() == Method::POST {
-            //     // let body_string = String::from_utf8_lossy(request.body());
-            //     dbg!(request.body());
-            // }
+            // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
             // Remove url scheme
             let path = request.uri().replace("wry://", "");
             ResponseBuilder::new()
@@ -78,11 +76,9 @@ fn main() -> wry::Result<()> {
                 .body(read(canonicalize(&path)?)?)
         })
         // tell the webview to load the custom protocol
-        .with_url(&format!("wry://{}/index.html", config_dir))?
-        // .with_devtools(true)
+        // .with_url(&format!("wry://{}/index.html", config_dir))?
+        .with_url("http://127.0.0.1:8080")?
         .build()?;
-
-    // webview.open_devtools();
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -91,6 +87,18 @@ fn main() -> wry::Result<()> {
             Event::NewEvents(StartCause::Init) => println!("Wry application started!"),
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
+                ..
+            } => *control_flow = ControlFlow::Exit,
+            Event::WindowEvent {
+                event:
+                    WindowEvent::KeyboardInput {
+                        event:
+                            KeyEvent {
+                                logical_key: Key::Escape,
+                                ..
+                            },
+                        ..
+                    },
                 ..
             } => *control_flow = ControlFlow::Exit,
             _ => (),
