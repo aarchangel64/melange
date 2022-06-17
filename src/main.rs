@@ -17,6 +17,7 @@ use crate::button::Button;
 
 mod anim;
 mod button;
+mod rect;
 mod settings;
 
 struct UI {
