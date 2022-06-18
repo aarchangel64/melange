@@ -9,15 +9,7 @@ name = "informant"
 
 [dependencies]
 wry = "0.18.3"
-
-# winit = {version = "0.25", features = ["serde"]}
-# # My fork of ggez with the added ability to create transparent windows
-# ggez = {git = "https://github.com/Cosmic-Goat/ggez", features = ["multithread-image-decoding"]} # "0.7"
-# mint = "0.5.9"
-# glam = { version = "0.20.5", features = ["mint"] }
-# keyframe = {version = "1.0.4", features = ["mint_types"]}
-# fontconfig = "0.5.0"
-
+mime_guess = "2.0.4"
 config = "0.13.1"
 serde_derive = "1.0.137"
 serde = "1.0.137"

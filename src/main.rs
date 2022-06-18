@@ -2,12 +2,14 @@
 extern crate smart_default;
 
 use std::env;
+use std::ffi::OsStr;
 use std::fs::{canonicalize, read};
 use std::process::Command;
 
 use wry::application::event::KeyEvent;
 use wry::application::keyboard::Key;
-use wry::application::window::Fullscreen;
+use wry::application::window::{Fullscreen, Window};
+use wry::http::{Request, Response};
 use wry::{
     application::{
         event::{Event, StartCause, WindowEvent},
@@ -38,6 +40,25 @@ fn execute(inputs: &Vec<String>) {
 //     event::quit(ctx)
 // }
 
+fn ipc_handler(window: &Window, message: String) {
+    println!("{message}");
+}
+
+fn protocol(request: &Request) -> Result<Response, wry::Error> {
+    // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
+
+    // Remove url scheme
+    let uri = request.uri().replace("wry://", "");
+    // get the file's location
+    let path = canonicalize(&uri)?;
+    // Use MimeGuess to guess a mime type
+    let mime = mime_guess::from_path(&path).first_raw().unwrap_or("");
+
+    // Read the file content from file path
+    let content = read(path)?;
+    ResponseBuilder::new().mimetype(mime).body(content)
+}
+
 fn main() -> wry::Result<()> {
     let config_dir = &format!(
         "{}/informant",
@@ -67,17 +88,11 @@ fn main() -> wry::Result<()> {
     let webview = WebViewBuilder::new(window)
         .unwrap()
         .with_transparent(true)
-        .with_custom_protocol("wry".into(), move |request| {
-            // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
-            // Remove url scheme
-            let path = request.uri().replace("wry://", "");
-            ResponseBuilder::new()
-                .mimetype("text/html")
-                .body(read(canonicalize(&path)?)?)
-        })
+        .with_ipc_handler(ipc_handler)
+        .with_custom_protocol("wry".into(), protocol)
         // tell the webview to load the custom protocol
-        // .with_url(&format!("wry://{}/index.html", config_dir))?
-        .with_url("http://127.0.0.1:8080")?
+        .with_url(&format!("wry://{}/index.html", config_dir))?
+        // .with_url("http://127.0.0.1:8080")?
         .build()?;
 
     event_loop.run(move |event, _, control_flow| {
