@@ -1,26 +1,32 @@
 use config::{Config, ConfigError, Environment, File};
 use serde_derive::Deserialize;
 use std::collections::HashMap;
-use wry::application::window::Fullscreen;
+use wry::application::dpi::{PhysicalPosition, PhysicalSize};
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
 pub struct Window {
-    // TODO: add window location & size setting
     // TODO: add monitor selection
     #[default(FullscreenType::Borderless)]
-    pub fullscreen: FullscreenType,
+    pub mode: FullscreenType,
+    #[default(None)]
+    pub size: Option<PhysicalSize<u32>>,
+    #[default(None)]
+    pub position: Option<PhysicalPosition<u32>>,
     #[default = true]
     pub always_on_top: bool,
     #[default = true]
     pub transparent: bool,
 }
 
+// Wry's fullscreen modes are jank
+// 'Exclusive' doesn't work on Linux apparently
+// Borderless here is just a window set to take up the full size of a monitor
 #[derive(Debug, Deserialize)]
 pub enum FullscreenType {
     Windowed,
     Borderless,
-    // Full,
+    Full,
 }
 
 #[derive(Debug, Deserialize)]

@@ -6,6 +6,7 @@ use std::fs::{canonicalize, read};
 use std::process::Command;
 
 use settings::{FullscreenType, Settings};
+use wry::application::dpi::PhysicalSize;
 use wry::application::event::KeyEvent;
 use wry::application::keyboard::Key;
 use wry::application::window::{Fullscreen, Window};
@@ -74,24 +75,37 @@ fn main() -> wry::Result<()> {
     let settings = Settings::new(config_dir);
     let event_loop = EventLoop::new();
 
-    let fullscreen = match settings.window.fullscreen {
-        FullscreenType::Windowed => None,
-        FullscreenType::Borderless => Some(Fullscreen::Borderless(None)),
-    };
-
     let window = WindowBuilder::new()
         .with_title("Informant")
         .with_decorations(false)
         .with_always_on_top(settings.window.always_on_top)
         .with_transparent(settings.window.transparent)
-        .with_fullscreen(fullscreen)
+        .with_fullscreen(match settings.window.mode {
+            FullscreenType::Windowed => None,
+            FullscreenType::Borderless => None,
+            FullscreenType::Full => Some(Fullscreen::Borderless(None)),
+        })
         .build(&event_loop)
         .unwrap();
 
-    let monitor = window.primary_monitor().unwrap();
-    window.set_inner_size(monitor.size());
-    window.set_outer_position(monitor.position());
-    window.set_resizable(false);
+    match settings.window.mode {
+        FullscreenType::Windowed => {
+            // Only set the window size and position if it's specified in the config,
+            // otherwise just let the WM handle it with its default behaviour
+            if let Some(size) = settings.window.size {
+                window.set_inner_size(size);
+            };
+            if let Some(position) = settings.window.position {
+                window.set_outer_position(position);
+            };
+        }
+        FullscreenType::Borderless => {
+            let monitor = window.primary_monitor().unwrap();
+            window.set_inner_size(monitor.size());
+            window.set_outer_position(monitor.position());
+        }
+        _ => {}
+    }
 
     let webview = WebViewBuilder::new(window)
         .unwrap()
@@ -102,6 +116,10 @@ fn main() -> wry::Result<()> {
         .with_url(&format!("wry://{}/index.html", config_dir))?
         // .with_url("http://127.0.0.1:8080")?
         .build()?;
+
+    // This has to be set AFTER any window size changes are made, otherwise they won't take effect
+    // Doesn't seem to work with setting a window size, so disabled for now
+    // webview.window().set_resizable(false);
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
