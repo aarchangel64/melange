@@ -1,167 +1,72 @@
 use config::{Config, ConfigError, Environment, File};
 use serde_derive::Deserialize;
 use std::collections::HashMap;
+use wry::application::window::Fullscreen;
 
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
-pub struct Anim {
-    #[default = 1.0]
-    pub duration: f32,
-    #[default = 0.2]
-    pub delay: f32,
-}
-
-#[derive(Debug, Deserialize, SmartDefault)]
-#[serde(default)]
-pub struct ButtonConfig {
-    #[default = "I'm a Button! :D"]
-    pub label: String,
-    pub command: String,
-    #[default(None)]
-    pub image: Option<String>,
-    #[default = 0.6]
-    pub image_size: f32,
-    #[default = 0xffffffff]
-    pub color: u32,
-    #[default = 1.5]
-    pub thickness: f32,
-}
-
-pub struct ButtonData {
-    pub label: String,
-    pub command: Vec<String>,
-    pub image: Option<String>,
-    pub image_size: f32,
-    pub color: Color,
-    pub thickness: f32,
-}
-
-#[derive(Debug, Deserialize, SmartDefault)]
-#[serde(default)]
-pub struct Font {
-    #[default = "sans"]
-    pub family: String,
-    #[default(None)]
-    pub style: Option<String>,
-    #[default = 24.0]
-    pub size: f32,
+pub struct Window {
+    // TODO: add window location & size setting
+    // TODO: add monitor selection
+    #[default(FullscreenType::Borderless)]
+    pub fullscreen: FullscreenType,
+    #[default = true]
+    pub always_on_top: bool,
+    #[default = true]
+    pub transparent: bool,
 }
 
 #[derive(Debug, Deserialize)]
-pub enum Modifiers {
-    SHIFT,
-    CTRL,
-    ALT,
-    HYPER,
-}
-
-impl Modifiers {
-    // Map Enum values to the keymods bitflag
-    fn value(&self) -> KeyMods {
-        match *self {
-            Modifiers::CTRL => KeyMods::CTRL,
-            Modifiers::SHIFT => KeyMods::SHIFT,
-            Modifiers::ALT => KeyMods::ALT,
-            Modifiers::HYPER => KeyMods::LOGO,
-        }
-    }
-}
-
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct Input {
-    pub key: KeyCode,
-    pub mods: KeyMods,
+pub enum FullscreenType {
+    Windowed,
+    Borderless,
+    // Full,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Keymap {
-    pub key: KeyCode,
-    #[serde(default)]
-    pub mods: Vec<Modifiers>,
-    pub command: String,
+pub struct Command {
+    name: String,
+    action: String,
 }
 
-#[derive(Debug, Deserialize, SmartDefault)]
-#[serde(default)]
-pub struct Background {
-    #[default([0.11, 0.11, 0.11, 0.7])]
-    pub color: [f32; 4],
-    #[default([0.0, 0.0, 0.0, 0.0])]
-    pub fade_in_color: [f32; 4],
-    #[default = 1.0]
-    pub fade_duration: f32,
-}
-
+// Struct to specify format for user supplied config data.
 #[derive(Debug, Deserialize, SmartDefault)]
 #[serde(default)]
 pub struct ConfigData {
-    #[default(FullscreenType::True)]
-    pub fullscreen: FullscreenType,
-    pub background: Background,
-    pub anim: Anim,
-    pub font: Font,
-    #[default(_code = "vec![ButtonConfig::default()]")]
-    pub buttons: Vec<ButtonConfig>,
-    pub keymap: Vec<Keymap>,
+    pub window: Window,
+    pub commands: Vec<Command>,
 }
 
-// TODO: Make a 'general' config struct
+// ConfigData gets mapped to these types for use by the program
 pub struct Settings {
-    pub fullscreen: FullscreenType,
-    pub background: Background,
-    pub anim: Anim,
-    pub font: Font,
-    pub keymap: HashMap<Input, Vec<String>>,
+    pub window: Window,
+    pub commands: HashMap<String, Vec<String>>,
 }
 
 impl Settings {
-    fn make_command(string: &str) -> Vec<String> {
-        string.split_whitespace().map(&str::to_string).collect()
-    }
-
-    pub fn new(ctx: &Context) -> (Self, Vec<ButtonData>) {
+    pub fn new(config_dir: &str) -> Self {
         // TODO: Handle invalid config error
-        let settings = ConfigData::new(ctx);
+        let config_data = ConfigData::new(config_dir);
 
-        match settings {
-            Ok(s) => {
+        match config_data {
+            Ok(data) => {
                 let mut map = HashMap::new();
-                let mut keymod = KeyMods::empty();
 
-                for keymap in s.keymap {
-                    for m in keymap.mods {
-                        keymod |= m.value();
-                    }
-
+                for command in data.commands {
                     map.insert(
-                        Input {
-                            key: keymap.key,
-                            mods: keymod,
-                        },
-                        Settings::make_command(&keymap.command),
+                        command.name,
+                        command
+                            .action
+                            .split_whitespace()
+                            .map(&str::to_string)
+                            .collect(),
                     );
                 }
 
-                (
-                    Settings {
-                        fullscreen: s.fullscreen,
-                        background: s.background,
-                        anim: s.anim,
-                        font: s.font,
-                        keymap: map,
-                    },
-                    s.buttons
-                        .iter()
-                        .map(|b| ButtonData {
-                            label: b.label.to_owned(),
-                            command: Settings::make_command(&b.command),
-                            image: b.image.to_owned(),
-                            image_size: b.image_size,
-                            color: Color::from_rgba_u32(b.color),
-                            thickness: b.thickness,
-                        })
-                        .collect(),
-                )
+                Settings {
+                    window: data.window,
+                    commands: map,
+                }
             }
             // TODO: Handle error better (maybe an error popup?)
             Err(error) => panic!("{}", error),
@@ -170,13 +75,10 @@ impl Settings {
 }
 
 impl ConfigData {
-    pub fn new(ctx: &Context) -> Result<Self, ConfigError> {
+    pub fn new(config_dir: &str) -> Result<Self, ConfigError> {
         let config = Config::builder()
             // Merge in the user's config file, if it exists
-            // TODO: Does specifying the format make a difference? to benchmark
-            .add_source(
-                File::from(ggez::filesystem::user_config_dir(ctx).join("config")).required(false),
-            )
+            .add_source(File::with_name(&format!("{config_dir}/config.toml")).required(false))
             // Add in settings from the environment (with a prefix of INFORMANT)
             // Eg.. `INFORMANT_FULLSCREEN=1` would set the `fullscreen` key
             .add_source(Environment::with_prefix("informant"));

@@ -2,10 +2,10 @@
 extern crate smart_default;
 
 use std::env;
-use std::ffi::OsStr;
 use std::fs::{canonicalize, read};
 use std::process::Command;
 
+use settings::{FullscreenType, Settings};
 use wry::application::event::KeyEvent;
 use wry::application::keyboard::Key;
 use wry::application::window::{Fullscreen, Window};
@@ -16,13 +16,13 @@ use wry::{
         event_loop::{ControlFlow, EventLoop},
         window::WindowBuilder,
     },
-    http::{method::Method, ResponseBuilder},
+    http::ResponseBuilder,
     webview::WebViewBuilder,
 };
 
 // use settings::{Input, Settings};
 
-// mod settings;
+mod settings;
 
 fn execute(inputs: &Vec<String>) {
     let output = Command::new(&inputs[0])
@@ -60,6 +60,7 @@ fn protocol(request: &Request) -> Result<Response, wry::Error> {
 }
 
 fn main() -> wry::Result<()> {
+    // TODO: add args, e.g. for html / data / config directory
     let config_dir = &format!(
         "{}/informant",
         env::var("XDG_CONFIG_HOME").unwrap_or_else(|_| format!(
@@ -70,20 +71,27 @@ fn main() -> wry::Result<()> {
         ))
     );
 
+    let settings = Settings::new(config_dir);
     let event_loop = EventLoop::new();
+
+    let fullscreen = match settings.window.fullscreen {
+        FullscreenType::Windowed => None,
+        FullscreenType::Borderless => Some(Fullscreen::Borderless(None)),
+    };
 
     let window = WindowBuilder::new()
         .with_title("Informant")
         .with_decorations(false)
-        .with_always_on_top(true)
-        .with_transparent(true)
-        // .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        .with_always_on_top(settings.window.always_on_top)
+        .with_transparent(settings.window.transparent)
+        .with_fullscreen(fullscreen)
         .build(&event_loop)
         .unwrap();
 
     let monitor = window.primary_monitor().unwrap();
     window.set_inner_size(monitor.size());
     window.set_outer_position(monitor.position());
+    window.set_resizable(false);
 
     let webview = WebViewBuilder::new(window)
         .unwrap()

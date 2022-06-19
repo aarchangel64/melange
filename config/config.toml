@@ -4,56 +4,8 @@
 # Only options that are marked as required are actually required
 # in order to run the program without error.
 
-fullscreen = "Desktop"
-
-[background]
-# The color of the background.
-color = [0.11, 0.11, 0.11, 0.7]
-# The inital color that the background fades in from.
-fade_in_color = [0.0, 0.0, 0.0, 0.0]
-# The duration of the fade in effect for the background. Set to 0.0 to disable the fade.
-fade_duration = 1.0
-
-[anim]
-duration = 1.5
-delay = 0.5
-
-# Specify which font to use here. Uses fontconfig to find fonts on your system.
-[font]
-# The name, or family, of the font.
-family = "sans"
-# The style of the font, e.g. italic, bold, thin
-style = "thin"
-# The size of the font. Note that this scales with your DPI.
-size = 24.0
-
-# Buttons are specified via an array, as shown here.
-# You can add or remove as many as you want.
-[[buttons]]
-# The text to be shown underneath the button
-label = "Sleep"
-# The command to be run when the button is clicked.
-command = "echo sleep"
-# The icon to be shown inside the button. This is relative to informant's config directory.
-# Note that there is a leading slash required.
-image = "/sleep.png"
-image_size = 0.6
-# The thickness of the button's borders
-thickness = 1.5
-# The color of the button's borders. Takes a u32 in RGBA format, so use the last two places for transparency.
-# For example, 0x00FF00_80 would be green borders at half transparency.
-color = 0xFFFFFF_FF
-
-
-[[buttons]]
-label = "Poweroff"
-command = "echo poweroff"
-image = "/power.png"
-
-[[buttons]]
-label = "Reboot"
-command = "echo reboot"
-image = "/restart.png"
+[window]
+fullscreen = "Windowed"
 
 # Hotkey shortcuts are also specified via an array, as shown here.
 # You can add or remove as many as you want.
