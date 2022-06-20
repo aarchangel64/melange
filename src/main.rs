@@ -6,7 +6,6 @@ use std::fs::{canonicalize, read};
 use std::process::Command;
 
 use settings::{FullscreenType, Settings};
-use wry::application::dpi::PhysicalSize;
 use wry::application::event::KeyEvent;
 use wry::application::keyboard::Key;
 use wry::application::window::{Fullscreen, Window};
@@ -60,19 +59,24 @@ fn protocol(request: &Request) -> Result<Response, wry::Error> {
     ResponseBuilder::new().mimetype(mime).body(content)
 }
 
+// TODO: Refactor code to lib.rs
 fn main() -> wry::Result<()> {
-    // TODO: add args, e.g. for html / data / config directory
-    let config_dir = &format!(
-        "{}/informant",
-        env::var("XDG_CONFIG_HOME").unwrap_or_else(|_| format!(
+    let args: Vec<String> = env::args().collect();
+    let config_dir = if let Some(path) = args.get(1) {
+        path.to_owned()
+    } else {
+        format!(
+            "{}/informant",
+            env::var("XDG_CONFIG_HOME").unwrap_or_else(|_| format!(
             "{}/.config",
             env::var("HOME").expect(
                 "Your $HOME variable isn't set, I think you have bigger problems than this error."
             )
         ))
-    );
+        )
+    };
 
-    let settings = Settings::new(config_dir);
+    let settings = Settings::new(&config_dir);
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()

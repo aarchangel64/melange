@@ -1,5 +1,5 @@
-# This config file shows the availble options for informant, as well most of the
-# default values used if not provided via config.
+# This config file shows the availble options for informant, as the default
+# values (which will be used if any options are ommited from the config file).
 #
 # Only options that are marked as required are actually required in order to run
 # the program without error.

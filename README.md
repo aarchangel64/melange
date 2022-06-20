@@ -31,10 +31,11 @@ sudo dnf install gtk3-devel webkit2gtk3-devel
 
 ## Usage
 
-Informant takes a single optional CLI argument: a config/data directory:
+Informant will load `index.html` from its config directory.
+Informant takes a single optional CLI argument, a config/data directory:
 
 ```bash
-informant your/html/path/here
+informant your/config/path/here
 ```
 
 This allows you to make different HTML frontends for multiple different use cases.
