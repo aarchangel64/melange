@@ -1,7 +1,7 @@
 # Melange
 
-Dashboards. Logout Screens. Weather Widgets. Anything your heart so desires.
-Easily create custom GUIs to customise your setup with the power of HTML, CSS, and Javascript!
+Dashboards. Logout Screens. Weather Widgets. App Launchers. Anything your heart so desires.
+Easily create interactive, responsive, animated GUIs to customise your setup with the power of HTML, CSS, and Javascript!
 
 Melange is program that renders a web page a using the embedded system WebView (WebkitGTK on Linux).
 It uses [Wry](https://github.com/tauri-apps/wry) under the hood.
@@ -40,3 +40,13 @@ melange your/config/path/here
 
 This allows you to make different HTML frontends for multiple different use cases.
 If this is not passed, Melange will default to looking in your user config directory (`$XDG_CONFIG_HOME/melange/`, or `~/.config/melange/` on Linux).
+
+Note that you can also pass in URLs like so:
+
+```bash
+melange http://127.0.0.1:8080
+```
+
+This can be useful if you wanted to develop your UI using a local dev server from tools such as [Webpack](https://webpack.js.org) or [Vite](https://vitejs.dev).
+I **highly discourage** loading pages from the internet due to security risk, since Melange can run shell commands on your machine from JavaScript (even though the commands are only ones you manually specify in `config.toml`).
+

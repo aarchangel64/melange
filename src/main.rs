@@ -20,7 +20,6 @@ use wry::{
     webview::WebViewBuilder,
 };
 
-
 mod settings;
 
 fn execute(inputs: &Vec<String>) {
@@ -35,10 +34,6 @@ fn execute(inputs: &Vec<String>) {
 //     MainState::execute(command);
 // }
 
-// if key == KeyCode::Escape {
-//     event::quit(ctx)
-// }
-
 fn ipc_handler(window: &Window, message: String) {
     println!("{message}");
 }
@@ -47,7 +42,7 @@ fn protocol(request: &Request) -> Result<Response, wry::Error> {
     // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
 
     // Remove url scheme
-    let uri = request.uri().replace("wry://", "");
+    let uri = request.uri().replace("melange://", "");
     // get the file's location
     let path = canonicalize(&uri)?;
     // Use MimeGuess to guess a mime type
@@ -110,14 +105,20 @@ fn main() -> wry::Result<()> {
         _ => {}
     }
 
+    // Allow the use of web servers, e.g. for local dev
+    let url = if config_dir.starts_with("http") {
+        config_dir
+    } else {
+        format!("melange://{}/index.html", &config_dir)
+    };
+
     let webview = WebViewBuilder::new(window)
         .unwrap()
         .with_transparent(true)
         .with_ipc_handler(ipc_handler)
-        .with_custom_protocol("wry".into(), protocol)
+        .with_custom_protocol("melange".into(), protocol)
         // tell the webview to load the custom protocol
-        .with_url(&format!("wry://{}/index.html", config_dir))?
-        // .with_url("http://127.0.0.1:8080")?
+        .with_url(&url)?
         .build()?;
 
     // This has to be set AFTER any window size changes are made, otherwise they won't take effect
@@ -149,59 +150,3 @@ fn main() -> wry::Result<()> {
         }
     });
 }
-
-// Build the loop.
-// TODO: Handle errors
-// let (mut ctx, event_loop) = cb.build()?;
-
-// let (settings, buttons) = Settings::new(&ctx);
-
-// let window = graphics::window(&ctx);
-// let scale = window.scale_factor() as f32;
-// let monitor = window.current_monitor().unwrap();
-
-// let monitor_width = monitor.size().width as f32;
-// let monitor_height = monitor.size().height as f32;
-
-// if let Err(err) = graphics::set_fullscreen(&mut ctx, settings.fullscreen) {
-//     eprintln!("{err}")
-// }
-
-// // Set window size to cover entire screen.
-// if settings.fullscreen != FullscreenType::Windowed {
-//     if let Err(err) = graphics::set_drawable_size(&mut ctx, monitor_width, monitor_height) {
-//         eprintln!("{err}")
-//     }
-
-//     if let Err(err) = graphics::set_screen_coordinates(
-//         &mut ctx,
-//         Rect {
-//             x: 0.,
-//             y: 0.,
-//             w: monitor_width,
-//             h: monitor_height,
-//         },
-//     ) {
-//         eprintln!("{err}")
-//     }
-// }
-
-// if settings.fullscreen == FullscreenType::Desktop {
-//     let window = graphics::window(&ctx);
-//     let pos = monitor.position();
-//     window.set_always_on_top(true);
-//     window.set_decorations(false);
-//     window.set_resizable(false);
-//     window.set_outer_position(pos);
-// }
-
-// // TODO: Handle setting fullscreen result?
-
-// // Convert button data from config file into button structs
-// let buttons = buttons
-//     .iter()
-//     .map(|b| Button::new_empty(&mut ctx, b, scale))
-//     .collect();
-
-// let game = MainState::new(&mut ctx, scale, buttons, settings)?;
-// event::run(ctx, event_loop, game);
