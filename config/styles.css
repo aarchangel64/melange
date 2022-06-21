@@ -5,6 +5,7 @@ body {
   color: white;
   margin: 0;
   font-family: "iosevka";
+  overflow: hidden;
 }
 
 @keyframes fadein {
@@ -20,15 +21,45 @@ body {
   display: grid;
   height: 100vh;
   grid-template:
-    ". . ." 30%
-    "info info ." 10%
+    ". . ." 15%
+    "info info ." 16%
     "sleep shutdown reboot" 30%
-    ". . ." 30% / 1fr 1fr 1fr;
+    ". . ." 21% / 1fr 1fr 1fr;
   grid-column-gap: 2em;
+  grid-row-gap: 6%;
   max-width: 50em;
   margin: auto;
-  padding: 0em 5em;
+  padding: 0em 4em;
   align-items: center;
+}
+
+.info {
+  grid-area: info;
+  border: 1px solid rgba(255, 255, 255, 1);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  animation: expand-right 1s forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+.info img {
+  padding: 0% 3%;
+  height: 80%;
+}
+
+@keyframes expand-right {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 100%;
+    opacity: 1;
+  }
 }
 
 .sleep {
@@ -56,8 +87,8 @@ body {
 }
 
 .btn {
-  position: relative;
-  height: 10em;
+  height: 100%;
+  width: 100%;
   text-align: center;
   cursor: pointer;
 }
@@ -69,14 +100,25 @@ body {
   transform: scale(1.2, 1.2);
 }
 
-.btn img {
-  height: 6em;
-  padding: 2em;
+@media (orientation: landscape) {
+  .btn img {
+    position: relative;
+    height: 70%;
+    top: 15%;
+  }
+}
+
+@media (orientation: portrait) {
+  .btn img {
+    position: relative;
+    width: 70%;
+    top: 15%;
+  }
 }
 
 .btn span {
   position: relative;
-  top: 1em;
+  top: 40%;
 }
 
 .button-anim {
@@ -108,7 +150,7 @@ body {
   opacity: 0;
   transition: all 0.9s;
   animation: button-anim-after 0.6s forwards;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 1);
   transform: scale(1.2, 1.2);
 }
 
