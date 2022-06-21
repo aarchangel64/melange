@@ -1,9 +1,9 @@
-# Informant
+# Melange
 
 Dashboards. Logout Screens. Weather Widgets. (Anything you want, really!)
 Easily create custom GUIs to rice your setup with the power of HTML, CSS, and Javascript!
 
-Informant is program that renders a web page a using the embedded system WebView (WebkitGTK on Linux).
+Melange is program that renders a web page a using the embedded system WebView (WebkitGTK on Linux).
 It uses [Wry](https://github.com/tauri-apps/wry) under the hood.
 
 ## Prerequisites
@@ -31,12 +31,12 @@ sudo dnf install gtk3-devel webkit2gtk3-devel
 
 ## Usage
 
-Informant will load `index.html` from its config directory.
-Informant takes a single optional CLI argument, a config/data directory:
+Melange will load `index.html` from its config directory.
+Melange takes a single optional CLI argument, a config/data directory:
 
 ```bash
-informant your/config/path/here
+melange your/config/path/here
 ```
 
 This allows you to make different HTML frontends for multiple different use cases.
-If this is not passed, Informant will default to looking in your user config directory (`$XDG_CONFIG_HOME/informant/`, or `~/.config/informant/` on Linux).
+If this is not passed, Melange will default to looking in your user config directory (`$XDG_CONFIG_HOME/melange/`, or `~/.config/melange/` on Linux).

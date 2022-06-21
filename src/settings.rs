@@ -13,7 +13,7 @@ pub struct Window {
     pub size: Option<PhysicalSize<u32>>,
     #[default(None)]
     pub position: Option<PhysicalPosition<u32>>,
-    #[default = "Informant"]
+    #[default = "Melange"]
     pub title: String,
     #[default = false]
     pub decorated: bool,

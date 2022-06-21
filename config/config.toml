@@ -1,4 +1,4 @@
-# This config file shows the available options for informant, as the default
+# This config file shows the available options for Melange, as the default
 # values (which will be used if any options are omitted from the config file).
 #
 # Only options that are marked as required are actually required in order to run
@@ -24,8 +24,8 @@ position = [0, 0]
 # The title of the window. Use this to set different window rules from your WM
 # for each config (for example, if you wanted one config to be tiled, and
 # another to be floating).
-# String | Optional | Default: "Informant"
-title = "Informant"
+# String | Optional | Default: "Melange"
+title = "Melange"
 
 # Whether window decorations (titlebar, window buttons, etc.) should be shown.
 # Boolean | Optional | Default: false
