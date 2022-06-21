@@ -13,6 +13,8 @@ pub struct Window {
     pub size: Option<PhysicalSize<u32>>,
     #[default(None)]
     pub position: Option<PhysicalPosition<u32>>,
+    #[default = "Informant"]
+    pub title: String,
     #[default = true]
     pub always_on_top: bool,
     #[default = true]

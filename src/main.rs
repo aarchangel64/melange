@@ -20,7 +20,6 @@ use wry::{
     webview::WebViewBuilder,
 };
 
-// use settings::{Input, Settings};
 
 mod settings;
 
@@ -80,7 +79,7 @@ fn main() -> wry::Result<()> {
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
-        .with_title("Informant")
+        .with_title(settings.window.title)
         .with_decorations(false)
         .with_always_on_top(settings.window.always_on_top)
         .with_transparent(settings.window.transparent)
