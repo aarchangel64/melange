@@ -15,6 +15,8 @@ pub struct Window {
     pub position: Option<PhysicalPosition<u32>>,
     #[default = "Informant"]
     pub title: String,
+    #[default = false]
+    pub decorated: bool,
     #[default = true]
     pub always_on_top: bool,
     #[default = true]

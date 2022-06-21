@@ -8,26 +8,36 @@
 # Window mode. Options are "Windowed", "Borderless", and "Full". Different WMs
 # have different behaviors, you'll have to try these out for yourself. For
 # example, on i3wm "Full" will not show programs behind a transparent window.
+# String | Optional | Default: "Borderless"
 mode = "Borderless"
 
 # The size of the window. Only has an effect in Windowed mode. If not provided,
 # it will default to your WM's behaviour.
+# Array: [int, int] | Optional | Default: WM behaviour
 size = [800, 600]
 
 # The position of the window. Only has an effect in Windowed mode. If not
 # provided, it will default to your WM's behaviour.
+# Array: [int, int] | Optional | Default: WM behaviour
 position = [0, 0]
 
 # The title of the window. Use this to set different window rules from your WM
 # for each config (for example, if you wanted one config to be tiled, and
 # another to be floating).
+# String | Optional | Default: "Informant"
 title = "Informant"
 
+# Whether window decorations (titlebar, window buttons, etc.) should be shown.
+# Boolean | Optional | Default: false
+decorated = false
+
 # Whether the window should be always on top.
+# Boolean | Optional | Default: true
 always_on_top = true
 
-# Whether the window should be transparent. Note you will also need to make your HTML
-# transparent for this to be effective. For example:
+# Whether the window should be transparent. Note you will also need to make your
+# HTML transparent for this to be effective. For example:
 # <body style="background-color: rgba(0,0,0,0.3)"> ... </body>
+# Boolean | Optional | Default: true
 transparent = true
 

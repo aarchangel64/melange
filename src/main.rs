@@ -80,7 +80,7 @@ fn main() -> wry::Result<()> {
 
     let window = WindowBuilder::new()
         .with_title(settings.window.title)
-        .with_decorations(false)
+        .with_decorations(settings.window.decorated)
         .with_always_on_top(settings.window.always_on_top)
         .with_transparent(settings.window.transparent)
         .with_fullscreen(match settings.window.mode {
