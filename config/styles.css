@@ -1,7 +1,7 @@
 body {
-  background-color: rgba(20, 20, 20, 0.3);
+  background-color: rgba(20, 20, 20, 0.5);
   /* background-color: rgba(0, 0, 0, 1); */
-  animation: fadein 1.5s;
+  animation: fadein 0.5s;
   color: white;
   margin: 0;
   font-family: "iosevka";
