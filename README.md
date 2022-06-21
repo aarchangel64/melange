@@ -1,7 +1,7 @@
 # Melange
 
-Dashboards. Logout Screens. Weather Widgets. (Anything you want, really!)
-Easily create custom GUIs to rice your setup with the power of HTML, CSS, and Javascript!
+Dashboards. Logout Screens. Weather Widgets. Anything your heart so desires.
+Easily create custom GUIs to customise your setup with the power of HTML, CSS, and Javascript!
 
 Melange is program that renders a web page a using the embedded system WebView (WebkitGTK on Linux).
 It uses [Wry](https://github.com/tauri-apps/wry) under the hood.
