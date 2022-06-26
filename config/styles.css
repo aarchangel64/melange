@@ -23,11 +23,10 @@ body {
   grid-template:
     ". . ." 15%
     "info info ." 16%
-    "sleep shutdown reboot" 30%
-    ". . ." 21% / 1fr 1fr 1fr;
-  grid-column-gap: 2em;
-  grid-row-gap: 6%;
-  max-width: 50em;
+    "sleep shutdown reboot" 25% / 1fr 1fr 1fr;
+  grid-column-gap: 12em;
+  grid-row-gap: 8%;
+  max-width: 80em;
   margin: auto;
   padding: 0em 4em;
   align-items: center;
