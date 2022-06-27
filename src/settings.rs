@@ -23,6 +23,13 @@ pub struct Window {
     pub transparent: bool,
 }
 
+#[derive(Debug, Deserialize, SmartDefault)]
+#[serde(default)]
+pub struct Debug {
+    #[default = false]
+    pub devtools: bool,
+}
+
 // Wry's fullscreen modes are jank
 // 'Exclusive' doesn't work on Linux apparently
 // Borderless here is just a window set to take up the full size of a monitor
@@ -44,12 +51,14 @@ pub struct Command {
 #[serde(default)]
 pub struct ConfigData {
     pub window: Window,
+    pub debug: Debug,
     pub commands: Vec<Command>,
 }
 
 // ConfigData gets mapped to these types for use by the program
 pub struct Settings {
     pub window: Window,
+    pub debug: Debug,
     pub commands: HashMap<String, Vec<String>>,
 }
 
@@ -75,6 +84,7 @@ impl Settings {
 
                 Settings {
                     window: data.window,
+                    debug: data.debug,
                     commands: map,
                 }
             }

@@ -23,5 +23,5 @@ fn main() {
     let event_loop = EventLoop::new();
     let window = melange.make_window(&event_loop);
     let webview = melange.make_webview(window);
-    melange.run_loop(event_loop);
+    Melange::run_loop(event_loop);
 }

@@ -40,3 +40,8 @@ always_on_top = true
 # Boolean | Optional | Default: true
 transparent = true
 
+[debug]
+# Whether the webview should enable developer tools. Useful for testing and
+# debugging your HTML / CSS / JS.
+# Boolean | Optional | Default: false
+devtools = true

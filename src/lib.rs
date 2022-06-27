@@ -20,55 +20,63 @@ mod settings;
 pub struct Melange {
     config_dir: String,
     settings: Settings,
-    // event_loop: EventLoop<()>,
 }
 
 impl Melange {
     pub fn new(config_dir: String) -> Self {
         let settings = Settings::new(&config_dir);
-        // let event_loop = EventLoop::new();
 
         Melange {
             config_dir,
             settings,
-            // event_loop,
         }
     }
-
-    fn execute(inputs: &Vec<String>) {
-        let output = Command::new(&inputs[0])
-            .args(&inputs[1..])
-            .output()
-            .expect("failed to execute process");
-        print!("{}", String::from_utf8(output.stdout).unwrap());
-    }
-
-    // if let Some(command) = self.config.keymap.get(&Input { key, mods }) {
-    //     MainState::execute(command);
-    // }
 
     fn ipc_handler(window: &Window, message: String) {
         println!("{message}");
     }
 
-    // fn run_protocol(request: &Request) -> Result<Response, wry::Error> {
+    // fn run_protocol(&self, request: &Request) -> Result<Response, wry::Error> {
     //     // Remove url scheme
     //     let uri = request.uri().replace("run://", "");
     // }
 
-    fn protocol(request: &Request) -> Result<Response, wry::Error> {
-        // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
-
+    fn protocol(&self, request: &Request) -> Result<Response, wry::Error> {
         // Remove url scheme
-        let uri = request.uri().replace("melange://", "");
-        // get the file's location
-        let path = fs::canonicalize(&uri)?;
-        // Use MimeGuess to guess a mime type
-        let mime = mime_guess::from_path(&path).first_raw().unwrap_or("");
+        let uri = dbg!(request.uri().replace("melange://", ""));
 
-        // Read the file content from file path
-        let content = fs::read(path)?;
-        ResponseBuilder::new().mimetype(mime).body(content)
+        if uri.starts_with(&self.config_dir) {
+            // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
+
+            // get the file's location
+            let path = fs::canonicalize(&uri)?;
+            // Use MimeGuess to guess a mime type
+            let mime = mime_guess::from_path(&path).first_raw().unwrap_or("");
+
+            // Read the file content from file path
+            let content = fs::read(path)?;
+            ResponseBuilder::new().mimetype(mime).body(content)
+        } else {
+            // Create a response with this header set due to a bug on Linux with empty headers
+            let response = ResponseBuilder::new().header("Access-Control-Allow-Origin", "*");
+            if let Some(inputs) = self.settings.commands.get(&uri) {
+                let output = Command::new(&inputs[0])
+                    .args(&inputs[1..])
+                    .output()
+                    .expect("failed to execute process");
+                // print!("{}", String::from_utf8(output.stdout).unwrap());
+
+                response
+                    .status(200)
+                    // See https://www.iana.org/assignments/media-types/text/strings
+                    .mimetype("text/strings")
+                    .body(output.stdout)
+            } else {
+                dbg!(response
+                    .status(404)
+                    .body("Command not found in config!".as_bytes().to_vec()))
+            }
+        }
     }
 
     pub fn make_window(&self, event_loop: &EventLoop<()>) -> Window {
@@ -107,7 +115,7 @@ impl Melange {
         window
     }
 
-    pub fn make_webview(&self, window: Window) -> Result<WebView, Error> {
+    pub fn make_webview(self, window: Window) -> Result<WebView, Error> {
         // Allow the use of web servers, e.g. for local dev
         let url = if self.config_dir.starts_with("http") {
             self.config_dir.to_owned()
@@ -118,9 +126,10 @@ impl Melange {
         let webview = WebViewBuilder::new(window)
             .unwrap()
             .with_transparent(true)
+            .with_devtools(self.settings.debug.devtools)
             .with_ipc_handler(Melange::ipc_handler)
-            .with_custom_protocol("melange".into(), Melange::protocol)
-            // .with_custom_protocol("run".into())
+            // .with_custom_protocol("run".into(), move |s| self.run_protocol(s))
+            .with_custom_protocol("melange".into(), move |s| self.protocol(s))
             // tell the webview to load the custom protocol
             .with_url(&url)?
             .build();
@@ -132,7 +141,7 @@ impl Melange {
         webview
     }
 
-    pub fn run_loop(&self, event_loop: EventLoop<()>) {
+    pub fn run_loop(event_loop: EventLoop<()>) {
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
 
