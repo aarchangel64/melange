@@ -2,13 +2,13 @@
 extern crate smart_default;
 
 use settings::{FullscreenType, Settings};
-use std::{fs, process::Command};
+use std::{cell::RefCell, collections::HashMap, fs, process::Command};
 use wry::{
     application::{
         event::{Event, KeyEvent, StartCause, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
         keyboard::Key,
-        window::{Fullscreen, Window, WindowBuilder},
+        window::{Fullscreen, Window, WindowBuilder, WindowId},
     },
     http::{Request, Response, ResponseBuilder},
     webview::{WebView, WebViewBuilder},
@@ -22,6 +22,10 @@ pub struct Melange {
     settings: Settings,
 }
 
+thread_local! {
+    static WEBVIEWS: RefCell<HashMap<WindowId, WebView>> = RefCell::new(HashMap::new());
+}
+
 impl Melange {
     pub fn new(config_dir: String) -> Self {
         let settings = Settings::new(&config_dir);
@@ -32,20 +36,34 @@ impl Melange {
         }
     }
 
-    fn ipc_handler(window: &Window, message: String) {
-        println!("{message}");
+    fn ipc_handler(window: &Window, message: String, commands: &HashMap<String, Vec<String>>) {
+        if let Some(inputs) = commands.get(&message) {
+            let output = Command::new(&inputs[0])
+                .args(&inputs[1..])
+                .output()
+                .expect("failed to execute process");
+            let stdout = String::from_utf8(output.stdout)
+                .unwrap()
+                // Replace newline characters with '\' + 'n' so that it is not interpreted incorrectly in evaluate_script
+                .replace("\n", "\\n");
+            println!("{stdout}");
+
+            WEBVIEWS.with(|webviews| {
+                let webviews = webviews.borrow();
+                if let Some(wv) = webviews.get(&window.id()) {
+                    wv.evaluate_script(dbg!(format!("window.response('{stdout}')").as_str()));
+                }
+            });
+        } else {
+            println!("not found");
+        }
     }
 
-    // fn run_protocol(&self, request: &Request) -> Result<Response, wry::Error> {
-    //     // Remove url scheme
-    //     let uri = request.uri().replace("run://", "");
-    // }
-
-    fn protocol(&self, request: &Request) -> Result<Response, wry::Error> {
+    fn protocol(config_dir: &str, request: &Request) -> Result<Response, wry::Error> {
         // Remove url scheme
         let uri = dbg!(request.uri().replace("melange://", ""));
 
-        if uri.starts_with(&self.config_dir) {
+        if uri.starts_with(config_dir) {
             // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
 
             // get the file's location
@@ -57,25 +75,10 @@ impl Melange {
             let content = fs::read(path)?;
             ResponseBuilder::new().mimetype(mime).body(content)
         } else {
-            // Create a response with this header set due to a bug on Linux with empty headers
-            let response = ResponseBuilder::new().header("Access-Control-Allow-Origin", "*");
-            if let Some(inputs) = self.settings.commands.get(&uri) {
-                let output = Command::new(&inputs[0])
-                    .args(&inputs[1..])
-                    .output()
-                    .expect("failed to execute process");
-                // print!("{}", String::from_utf8(output.stdout).unwrap());
-
-                response
-                    .status(200)
-                    // See https://www.iana.org/assignments/media-types/text/strings
-                    .mimetype("text/strings")
-                    .body(output.stdout)
-            } else {
-                dbg!(response
-                    .status(404)
-                    .body("Command not found in config!".as_bytes().to_vec()))
-            }
+            ResponseBuilder::new()
+                .status(403)
+                .mimetype("text/strings")
+                .body("Cannot access!".as_bytes().to_vec())
         }
     }
 
@@ -115,7 +118,7 @@ impl Melange {
         window
     }
 
-    pub fn make_webview(self, window: Window) -> Result<WebView, Error> {
+    pub fn make_webview(self, window: Window) {
         // Allow the use of web servers, e.g. for local dev
         let url = if self.config_dir.starts_with("http") {
             self.config_dir.to_owned()
@@ -123,22 +126,31 @@ impl Melange {
             format!("melange://{}/index.html", self.config_dir)
         };
 
+        let id = window.id();
         let webview = WebViewBuilder::new(window)
             .unwrap()
             .with_transparent(true)
             .with_devtools(self.settings.debug.devtools)
-            .with_ipc_handler(Melange::ipc_handler)
-            // .with_custom_protocol("run".into(), move |s| self.run_protocol(s))
-            .with_custom_protocol("melange".into(), move |s| self.protocol(s))
+            .with_ipc_handler(move |w, m| Melange::ipc_handler(w, m, &self.settings.commands))
+            .with_custom_protocol("melange".into(), move |s| {
+                Melange::protocol(&self.config_dir, s)
+            })
             // tell the webview to load the custom protocol
-            .with_url(&url)?
+            .with_url(&url)
+            .unwrap()
             .build();
 
         // This has to be set AFTER any window size changes are made, otherwise they won't take effect
         // Doesn't seem to work with setting a window size, so disabled for now
         // webview.window().set_resizable(false);
 
-        webview
+        // Insert webview into the static variable, in order to call evaluate_script on it
+        if let Ok(wv) = webview {
+            WEBVIEWS.with(|webviews| {
+                let mut webviews = webviews.borrow_mut();
+                webviews.insert(id, wv);
+            });
+        }
     }
 
     pub fn run_loop(event_loop: EventLoop<()>) {

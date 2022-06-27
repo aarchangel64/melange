@@ -45,3 +45,7 @@ transparent = true
 # debugging your HTML / CSS / JS.
 # Boolean | Optional | Default: false
 devtools = true
+
+[[commands]]
+name = "echo"
+action = "echo test"
