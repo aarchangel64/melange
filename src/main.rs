@@ -19,7 +19,7 @@ fn main() {
         )
     };
 
-    let melange = Melange::new(config_dir);
+    let mut melange = Melange::new(config_dir);
     let event_loop = EventLoop::new();
     let window = melange.make_window(&event_loop);
     let webview = melange.make_webview(window);

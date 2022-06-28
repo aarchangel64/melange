@@ -8,11 +8,10 @@ use wry::{
         event::{Event, KeyEvent, StartCause, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
         keyboard::Key,
-        window::{Fullscreen, Window, WindowBuilder, WindowId},
+        window::{Fullscreen, Window, WindowBuilder},
     },
     http::{Request, Response, ResponseBuilder},
     webview::{WebView, WebViewBuilder},
-    Error,
 };
 
 mod settings;
@@ -22,11 +21,11 @@ pub struct Melange {
     settings: Settings,
 }
 
-thread_local! {
-    static WEBVIEWS: RefCell<HashMap<WindowId, WebView>> = RefCell::new(HashMap::new());
-}
-
 impl Melange {
+    thread_local! {
+        static WEBVIEW: RefCell<Option<WebView>> = RefCell::new(None)
+    }
+
     pub fn new(config_dir: String) -> Self {
         let settings = Settings::new(&config_dir);
 
@@ -48,9 +47,8 @@ impl Melange {
                 .replace("\n", "\\n");
             println!("{stdout}");
 
-            WEBVIEWS.with(|webviews| {
-                let webviews = webviews.borrow();
-                if let Some(wv) = webviews.get(&window.id()) {
+            Melange::WEBVIEW.with(|rc| {
+                if let Some(wv) = rc.borrow().as_ref() {
                     wv.evaluate_script(dbg!(format!("window.response('{stdout}')").as_str()));
                 }
             });
@@ -126,7 +124,6 @@ impl Melange {
             format!("melange://{}/index.html", self.config_dir)
         };
 
-        let id = window.id();
         let webview = WebViewBuilder::new(window)
             .unwrap()
             .with_transparent(true)
@@ -144,12 +141,9 @@ impl Melange {
         // Doesn't seem to work with setting a window size, so disabled for now
         // webview.window().set_resizable(false);
 
-        // Insert webview into the static variable, in order to call evaluate_script on it
+        // Store created webview in the static variable, in order to call evaluate_script on it in the ipc handler
         if let Ok(wv) = webview {
-            WEBVIEWS.with(|webviews| {
-                let mut webviews = webviews.borrow_mut();
-                webviews.insert(id, wv);
-            });
+            Melange::WEBVIEW.with(|rc| *rc.borrow_mut() = Some(wv))
         }
     }
 
