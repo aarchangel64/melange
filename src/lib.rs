@@ -43,13 +43,14 @@ impl Melange {
                 .expect("failed to execute process");
             let stdout = String::from_utf8(output.stdout)
                 .unwrap()
-                // Replace newline characters with '\' + 'n' so that it is not interpreted incorrectly in evaluate_script
-                .replace("\n", "\\n");
+                // Escape backtick and dollar characters so that the commnad output doesn't get evaluated as JS in evaluate_script
+                .replace("`", "\\`")
+                .replace("$", "\\$");
             println!("{stdout}");
 
             Melange::WEBVIEW.with(|rc| {
                 if let Some(wv) = rc.borrow().as_ref() {
-                    wv.evaluate_script(dbg!(format!("window.response('{stdout}')").as_str()));
+                    wv.evaluate_script(dbg!(format!("window.response(`{stdout}`)").as_str()));
                 }
             });
         } else {
