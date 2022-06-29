@@ -47,5 +47,13 @@ transparent = true
 devtools = true
 
 [[commands]]
-name = "echo"
-action = "echo test"
+name = "kernel_name"
+action = "uname -r"
+
+[[commands]]
+name = "host_name"
+action = "uname -n"
+
+[[commands]]
+name = "user_name"
+action = "whoami"

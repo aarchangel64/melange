@@ -37,6 +37,8 @@ impl Melange {
 
     fn ipc_handler(window: &Window, message: String, commands: &HashMap<String, Vec<String>>) {
         if let Some(inputs) = commands.get(&message) {
+            println!("Running command '{message}': {}", inputs.join(" "));
+
             // TODO: Add option to execute via shell
             let output = Command::new(&inputs[0])
                 .args(&inputs[1..])
@@ -49,24 +51,24 @@ impl Melange {
                 .replace("`", "\\`")
                 .replace("$", "\\$");
 
-            println!("{stdout}");
+            println!("Result:\n{stdout}");
 
             // TODO: Create JS Callback system
             Melange::WEBVIEW.with(|rc| {
                 if let Some(wv) = rc.borrow().as_ref() {
-                    wv.evaluate_script(dbg!(
-                        format!("window.functions[`{message}`](`{stdout}`)").as_str()
-                    ));
+                    wv.evaluate_script(
+                        format!("window.functions[`{message}`](`{stdout}`)").as_str(),
+                    );
                 }
             });
         } else {
-            println!("not found");
+            eprint!("Command {message} not found in config!");
         }
     }
 
     fn protocol(config_dir: &str, request: &Request) -> Result<Response, wry::Error> {
         // Remove url scheme
-        let uri = dbg!(request.uri().replace("melange://", ""));
+        let uri = request.uri().replace("melange://", "");
 
         if uri.starts_with(config_dir) {
             // TODO: Add check to make sure only files in the config directory can be accessed (with an option, maybe?)
@@ -135,10 +137,12 @@ impl Melange {
             .unwrap()
             .with_transparent(true)
             .with_devtools(self.settings.debug.devtools)
-            .with_ipc_handler(move |w, m| Melange::ipc_handler(w, m, &self.settings.commands))
             .with_custom_protocol("melange".into(), move |s| {
                 Melange::protocol(&self.config_dir, s)
             })
+            .with_ipc_handler(move |w, m| Melange::ipc_handler(w, m, &self.settings.commands))
+            // JS code to create window.runCommand function for end users
+            .with_initialization_script(include_str!("init.js"))
             // tell the webview to load the custom protocol
             .with_url(&url)
             .unwrap()
@@ -148,8 +152,8 @@ impl Melange {
         // Doesn't seem to work with setting a window size, so disabled for now
         // webview.window().set_resizable(false);
 
-        // Store created webview in the static variable, in order to call evaluate_script on it in the ipc handler
         if let Ok(wv) = webview {
+            // Store created webview in the static variable, in order to call evaluate_script on it in the ipc handler
             Melange::WEBVIEW.with(|rc| *rc.borrow_mut() = Some(wv))
         }
     }
@@ -159,7 +163,7 @@ impl Melange {
             *control_flow = ControlFlow::Wait;
 
             match event {
-                Event::NewEvents(StartCause::Init) => println!("Wry application started!"),
+                Event::NewEvents(StartCause::Init) => println!("Launching Melange!"),
                 Event::WindowEvent {
                     event: WindowEvent::CloseRequested,
                     ..
